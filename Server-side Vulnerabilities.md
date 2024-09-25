@@ -32,3 +32,11 @@ como resultado, un atacante puede solicitar la siguiente URL para recuperar el `
 Esto hace que la aplicación lea desde la siguiente ruta
 
 `/var/www/images/../../../etc/passwd`
+
+LA secuencia ../ es válidad dentro de un ruta de archivos y significa subir un nivel en al estructura de directorios. Las tres ../ consecutivas suben de nivel desde /var/www/images la raíz del sistema de archivos, por lo que el archivo que se lee en realidad es `/etc/passwd/`
+
+En los sistemas operativos basados en Unix, este es un archivo estándar que contiene detalles de lso usuarios registrados en el servidor , pero un atacante podría recuperar otros archivos arbitrarios utilizando la misma técnica
+
+En Windows tanto ../ como ..\ son secuencias válidas de path traversal . Un ejemplo de ataque equivalente contra un servidor de Windows:
+
+`https://insecure-website.com/loadImage?filename=..\..\..\windows\win.ini`
