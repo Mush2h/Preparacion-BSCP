@@ -97,7 +97,21 @@ Es posible que un atacante no pueda adivinar esto directamente. Sin embargo la a
 Este script agrega un enlace a la interfaz de usuario del usuario si es un usuario administrador. 
 Sin embargo, el script que contiene la URL es visible para todos los usuarios, independientemente de su rol.
 
+## Métodos de control de acceso basados ​​en parámetros
 
+Algunas aplicaciones determinan los derechos de acceso o el rol del usuario al iniciar sesión y luego almacenan esta información en una ubicación que el usuario puede controlar. 
+Esta podría ser:
+
+- Un campo oculto.
+- Una galleta.
+- Un parámetro de cadena de consulta preestablecido.
+
+La aplicación toma decisiones de control de acceso en función del valor enviado. Por ejemplo:
+
+`https://insecure-website.com/login/home.jsp?admin=true`
+`https://insecure-website.com/login/home.jsp?role=1`
+ 
+Este enfoque es inseguro porque un usuario puede modificar el valor y acceder a funciones a las que no está autorizado, como funciones administrativas.
 
 
 
