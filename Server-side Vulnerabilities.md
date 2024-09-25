@@ -110,10 +110,21 @@ La aplicación toma decisiones de control de acceso en función del valor enviad
 
 `https://insecure-website.com/login/home.jsp?admin=true`
 `https://insecure-website.com/login/home.jsp?role=1`
- 
+
 Este enfoque es inseguro porque un usuario puede modificar el valor y acceder a funciones a las que no está autorizado, como funciones administrativas.
 
+## Escalada de privilegios horizontal
+La escalada de privilegios horizontal se produce si un usuario puede acceder a los recursos que pertenecen a otro usuario, en lugar de a sus propios recursos de ese tipo. Por ejemplo, si un empleado puede acceder a los registros de otros empleados además de a los suyos propios, se trata de una escalada de privilegios horizontal.
 
+Los ataques de escalada de privilegios horizontales pueden utilizar métodos de explotación similares a los de la escalada de privilegios verticales. Por ejemplo, un usuario podría acceder a la página de su propia cuenta mediante la siguiente URL:
+
+https://insecure-website.com/myaccount?id=123
+Si un atacante modifica el idvalor del parámetro al de otro usuario, podría obtener acceso a la página de la cuenta de otro usuario y a los datos y funciones asociados.
+
+Nota
+Este es un ejemplo de una vulnerabilidad de referencia directa a objetos (IDOR) insegura. Este tipo de vulnerabilidad surge cuando se utilizan valores de parámetros del controlador del usuario para acceder directamente a recursos o funciones.
+
+En algunas aplicaciones, el parámetro explotable no tiene un valor predecible. Por ejemplo, en lugar de un número creciente, una aplicación podría utilizar identificadores únicos globales (GUID) para identificar a los usuarios. Esto puede impedir que un atacante adivine o prediga el identificador de otro usuario. Sin embargo, los GUID que pertenecen a otros usuarios podrían revelarse en otras partes de la aplicación donde se hace referencia a los usuarios, como mensajes o reseñas de usuarios.
 
 
 
