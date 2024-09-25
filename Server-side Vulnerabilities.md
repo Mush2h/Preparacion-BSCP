@@ -40,3 +40,20 @@ En los sistemas operativos basados en Unix, este es un archivo estándar que con
 En Windows tanto ../ como ..\ son secuencias válidas de path traversal . Un ejemplo de ataque equivalente contra un servidor de Windows:
 
 `https://insecure-website.com/loadImage?filename=..\..\..\windows\win.ini`
+
+## Qué es le control de acceso
+
+El control de acceso es la aplicación de restrinciones sobre quién o qué está autorizado a realizar acciones o acceder a resursos. En el contexto de las aplicaciones web , el control de acceso depende de la autenticación y la gestión de sesiones:
+
+- La autenticacion confirma que el usuario es quien dice ser
+-LA gestión de sesiones identifica qué solicitudes HTTP posteriores realiza ese mismo usuario
+-El control de acceso determina si el usuario puede realizar la acción que intenta realizar.
+
+Los controles de acceso defectuosos son habituales y suelen representar una vulnerabilidad de seguridad critica .El diseño y la gestión de controles de acceso es un problema complejo y dinámico que aplica restrinciones comerciales , organizativas y legales a una implementación técnica . Las decisiones de diseño de los controles de acceso deben ser tomadas por personas , por lo que los errores son altos.
+
+## Escalada de privilegios verticales
+
+Si un usuario puede acceder a una función a la que no tiene permiso ,se trata de una escalada de privilegios vertical. Por ejemplo si un usuario no administrativo puede acceder a una ágina de administración donde puede eliminar cuentas de ususario, se trata de una escalada de privilegios vertical.
+
+
+
