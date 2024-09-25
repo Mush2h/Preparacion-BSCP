@@ -1,6 +1,6 @@
-## Server-side vulnerabilities
+# Server-side vulnerabilities
 
-# Qué es un path traversal
+## Qué es un path traversal
 
 El path traversal tambien conocido como recorrido de direcctorio. EStas vulnerabilidades permiten a un atacante leer archivos arbitrarios en el servidor que ejecuta en una aplicación.
 
@@ -11,7 +11,7 @@ Archivos confidenciales del SO.
 
 En algunos casos, un atacante podría escribir en archivos arbitrarios del servidor, lo que le permitiría modificar datos o comportamientos de la aplicacion y, en ultima instancia, tomar el control total del servidor.
 
-# Lectura de archivos a través del path traversal
+## Lectura de archivos a través del path traversal
 
 Imagine una aplicación de compras que muestra imagenes de artículos en venta. Esta podría cargar una imagen utilizando el siguiente código HTML
 
