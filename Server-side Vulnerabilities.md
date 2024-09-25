@@ -129,6 +129,11 @@ Este es un ejemplo de una vulnerabilidad de referencia directa a objetos (IDOR) 
 En algunas aplicaciones, el parámetro explotable no tiene un valor predecible. Por ejemplo, en lugar de un número creciente, una aplicación podría utilizar identificadores únicos globales (GUID) para identificar a los usuarios. Esto puede impedir que un atacante adivine o prediga el identificador de otro usuario. Sin embargo, los GUID que pertenecen a otros usuarios podrían revelarse en otras partes de la aplicación donde se hace referencia a los usuarios, como mensajes o reseñas de usuarios.
 
 
+## Escalada de privilegios de horizontal a vertical
+A menudo, un ataque de escalada de privilegios horizontal puede convertirse en uno vertical, comprometiendo a un usuario con más privilegios. Por ejemplo, una escalada horizontal podría permitir a un atacante restablecer o capturar la contraseña de otro usuario. Si el atacante ataca a un usuario administrativo y compromete su cuenta, puede obtener acceso administrativo y, por lo tanto, realizar una escalada de privilegios vertical.
 
+Un atacante podría obtener acceso a la página de la cuenta de otro usuario utilizando la técnica de manipulación de parámetros ya descrita para la escalada de privilegios horizontal:
 
+https://insecure-website.com/myaccount?id=456
+Si el usuario objetivo es un administrador de la aplicación, el atacante obtendrá acceso a una página de cuenta administrativa. Esta página puede revelar la contraseña del administrador o proporcionar un medio para cambiarla, o puede proporcionar acceso directo a funciones privilegiadas.
 
