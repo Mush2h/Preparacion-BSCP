@@ -69,6 +69,35 @@ En este sitio web podría alojar funcionalidad confidencial en la siguiente URL.
 
 Cualquier usuario puede acceder a esta función no solo los usuarios administradores que tienen un enlace . En algunos casos el URL administrativa puede estar disponible en otras ubicaciones como en el `robots.txt`.
 
+En algunos casos m se ocultan funciones sensibles al asignarles una URL menos predecible. es decir "seguridad por oscuridad". Sim embargo ocultar funciones sensibles no proporciona un control de acceso efectivo porque los usuarios pueden descubrir la URL oculta de varias maneras.
+
+Ejemplo:
+
+Aplicación que aloja funciones administrativas en esta URL:
+
+
+```ruby
+https://insecure-website.com/administrator-panel-fasdfadsf
+```
+
+Es posible que un atacante no pueda adivinar esto directamente. Sin embargo la aplicacion puede filtrar la URL a los usuarios y podría revelarse en Javascript que construye la interfaz de usuario en función del rol del usuario.
+
+```ruby
+<script>
+	var isAdmin = false;
+	if (isAdmin) {
+		...
+		var adminPanelTag = document.createElement('a');
+		adminPanelTag.setAttribute('https://insecure-website.com/administrator-panel-fasdfadsf');
+		adminPanelTag.innerText = 'Admin panel';
+		...
+	}
+</script>
+```
+Este script agrega un enlace a la interfaz de usuario del usuario si es un usuario administrador. 
+Sin embargo, el script que contiene la URL es visible para todos los usuarios, independientemente de su rol.
+
+
 
 
 
