@@ -2,7 +2,7 @@
 
 ## Qué es un path traversal
 
-El path traversal tambien conocido como recorrido de direcctorio. EStas vulnerabilidades permiten a un atacante leer archivos arbitrarios en el servidor que ejecuta en una aplicación.
+El path traversal también conocido como recorrido de direcctorio. EStas vulnerabilidades permiten a un atacante leer archivos arbitrarios en el servidor que ejecuta en una aplicación.
 
 Esto podría incluir:
 Códigos y datos de la aplicación.
