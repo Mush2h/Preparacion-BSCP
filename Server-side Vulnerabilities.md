@@ -137,3 +137,15 @@ Un atacante podría obtener acceso a la página de la cuenta de otro usuario uti
 https://insecure-website.com/myaccount?id=456
 Si el usuario objetivo es un administrador de la aplicación, el atacante obtendrá acceso a una página de cuenta administrativa. Esta página puede revelar la contraseña del administrador o proporcionar un medio para cambiarla, o puede proporcionar acceso directo a funciones privilegiadas.
 
+## Vulnerabilidades de autenticación
+En teoría, las vulnerabilidades de autenticación son fáciles de entender. Sin embargo, suelen ser críticas debido a la clara relación entre autenticación y seguridad.
+
+Las vulnerabilidades de autenticación pueden permitir a los atacantes obtener acceso a datos y funciones confidenciales. También exponen una superficie de ataque adicional para futuras vulnerabilidades. Por este motivo, es importante aprender a identificar y explotar las vulnerabilidades de autenticación y a eludir las medidas de protección habituales.
+
+En esta sección explicamos:
+
+Los mecanismos de autenticación más comunes utilizados por los sitios web.
+Posibles vulnerabilidades en estos mecanismos.
+Vulnerabilidades inherentes a diferentes mecanismos de autenticación.
+Vulnerabilidades típicas que se introducen por su implementación incorrecta.
+Cómo hacer que sus propios mecanismos de autenticación sean lo más robustos posib
