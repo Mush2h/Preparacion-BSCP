@@ -148,4 +148,40 @@ Los mecanismos de autenticación más comunes utilizados por los sitios web.
 Posibles vulnerabilidades en estos mecanismos.
 Vulnerabilidades inherentes a diferentes mecanismos de autenticación.
 Vulnerabilidades típicas que se introducen por su implementación incorrecta.
-Cómo hacer que sus propios mecanismos de autenticación sean lo más robustos posib
+Cómo hacer que sus propios mecanismos de autenticación sean lo más robustos posible
+
+## ¿Cuál es la diferencia entre autenticación y autorización?
+La autenticación es el proceso de verificar que un usuario es quien dice ser. La autorización implica verificar si un usuario tiene permiso para hacer algo.
+
+Por ejemplo, la autenticación determina si alguien que intenta acceder a un sitio web con el nombre de usuario `Carlos123es` realmente la misma persona que creó la cuenta.
+
+Una vez Carlos123 autenticado, sus permisos determinan lo que está autorizado a hacer. Por ejemplo, puede estar autorizado a acceder a información personal sobre otros usuarios o realizar acciones como eliminar la cuenta de otro usuario.
+
+## Ataques de fuerza bruta
+Un ataque de fuerza bruta es cuando un atacante utiliza un sistema de prueba y error para adivinar las credenciales válidas de un usuario. Estos ataques suelen estar automatizados mediante listas de nombres de usuario y contraseñas. La automatización de este proceso, especialmente mediante herramientas dedicadas, permite potencialmente que un atacante realice una gran cantidad de intentos de inicio de sesión a gran velocidad.
+
+La fuerza bruta no siempre consiste en adivinar nombres de usuario y contraseñas de forma totalmente aleatoria. Al utilizar también lógica básica o conocimientos disponibles públicamente, los atacantes pueden afinar los ataques de fuerza bruta para realizar conjeturas mucho más fundamentadas. Esto aumenta considerablemente la eficacia de dichos ataques. Los sitios web que dependen del inicio de sesión con contraseña como único método de autenticación de los usuarios pueden ser muy vulnerables si no implementan una protección suficiente contra la fuerza bruta.
+
+## Nombres de usuario forzados por fuerza bruta
+Los nombres de usuario son especialmente fáciles de adivinar si se ajustan a un patrón reconocible, como una dirección de correo electrónico. Por ejemplo, es muy común ver inicios de sesión comerciales en el formato firstname.lastname@somecompany.com. Sin embargo, incluso si no hay un patrón obvio, a veces incluso las cuentas con privilegios elevados se crean utilizando nombres de usuario predecibles, como admino administrator.
+
+Durante la auditoría, verifique si el sitio web revela nombres de usuario potenciales de forma pública. Por ejemplo, ¿puede acceder a los perfiles de usuario sin iniciar sesión? Incluso si el contenido real de los perfiles está oculto, el nombre utilizado en el perfil a veces es el mismo que el nombre de usuario de inicio de sesión. También debe verificar las respuestas HTTP para ver si se revela alguna dirección de correo electrónico. Ocasionalmente, las respuestas contienen direcciones de correo electrónico de usuarios con privilegios elevados, como administradores o soporte de TI.
+
+## Fuerza bruta de contraseñas
+
+Las contraseñas también se pueden descifrar mediante fuerza bruta, y la dificultad varía según la fortaleza de la contraseña. Muchos sitios web adoptan algún tipo de política de contraseñas que obliga a los usuarios a crear contraseñas de alta entropía que, al menos en teoría, son más difíciles de descifrar mediante fuerza bruta únicamente. Esto suele implicar la aplicación de contraseñas con:
+
+- Un número mínimo de caracteres
+- Una mezcla de letras mayúsculas y minúsculas
+- Al menos un carácter especial
+
+Sin embargo, aunque las contraseñas de alta entropía son difíciles de descifrar para las computadoras por sí solas, podemos usar un conocimiento básico del comportamiento humano para explotar las vulnerabilidades que los usuarios introducen involuntariamente en este sistema. En lugar de crear una contraseña segura con una combinación aleatoria de caracteres, los usuarios a menudo toman una contraseña que pueden recordar e intentan forzarla para que se ajuste a la política de contraseñas. Por ejemplo, si mypasswordno está permitido, los usuarios pueden intentar algo como Mypassword1!o Myp4$$w0rden su lugar.
+
+En los casos en los que la política exige que los usuarios cambien sus contraseñas periódicamente, también es habitual que los usuarios realicen cambios menores y predecibles en su contraseña preferida. Por ejemplo, Mypassword1!se convierte Mypassword1?en oMypassword2!.
+
+Este conocimiento de credenciales probables y patrones predecibles significa que los ataques de fuerza bruta a menudo pueden ser mucho más sofisticados y, por lo tanto, efectivos, que simplemente iterar a través de cada combinación posible de caracteres.
+
+## Enumeración de nombres de usuario
+La enumeración de nombres de usuario es cuando un atacante puede observar cambios en el comportamiento del sitio web para identificar si un nombre de usuario determinado es válido.
+
+La enumeración de nombres de usuario suele ocurrir en la página de inicio de sesión, por ejemplo, cuando se introduce un nombre de usuario válido pero una contraseña incorrecta, o en los formularios de registro cuando se introduce un nombre de usuario que ya está en uso. Esto reduce en gran medida el tiempo y el esfuerzo necesarios para forzar un inicio de sesión, ya que el atacante puede generar rápidamente una lista de nombres de usuario válidos.
