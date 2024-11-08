@@ -201,22 +201,27 @@ En un ataque SSRF contra el servidor, el atacante hace que la aplicación envíe
 
 Por ejemplo, imaginemos una aplicación de compras que permite al usuario ver si un artículo está en stock en una tienda en particular. Para proporcionar la información sobre el stock, la aplicación debe consultar varias API REST de back-end. Para ello, pasa la URL al punto final de la API de back-end correspondiente a través de una solicitud HTTP de front-end. Cuando un usuario ve el estado del stock de un artículo, su navegador realiza la siguiente solicitud:
 
-`POST /product/stock HTTP/1.0
+```ruby
+POST /product/stock HTTP/1.0
 Content-Type: application/x-www-form-urlencoded
 Content-Length: 118
 
-stockApi=http://stock.weliketoshop.net:8080/product/stock/check%3FproductId%3D6%26storeId%3D1`
+stockApi=http://stock.weliketoshop.net:8080/product/stock/check%3FproductId%3D6%26storeId%3D1
+```
 
 Esto hace que el servidor realice una solicitud a la URL especificada, recupere el estado del stock y lo devuelva al usuario.
 
 En este ejemplo, un atacante puede modificar la solicitud para especificar una URL local del servidor:
 
-`POST /product/stock HTTP/1.0
+```ruby
+POST /product/stock HTTP/1.0
 Content-Type: application/x-www-form-urlencoded
 Content-Length: 118
 
-stockApi=http://localhost/admin`
+stockApi=http://localhost/admin
+```
 
 El servidor obtiene el contenido de la /adminURL y lo devuelve al usuario.
 
 Un atacante puede visitar la /adminURL, pero la funcionalidad administrativa normalmente solo es accesible para usuarios autenticados. Esto significa que un atacante no verá nada de interés. Sin embargo, si la solicitud a la /adminURL proviene de la máquina local, se omiten los controles de acceso normales. La aplicación otorga acceso completo a la funcionalidad administrativa, porque la solicitud parece originarse desde una ubicación confiable.
+
