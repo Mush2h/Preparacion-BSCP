@@ -5,11 +5,13 @@
 El path traversal también conocido como recorrido de direcctorio. EStas vulnerabilidades permiten a un atacante leer archivos arbitrarios en el servidor que ejecuta en una aplicación.
 
 Esto podría incluir:
-Códigos y datos de la aplicación.
-Credenciales para sistemas del back-end.
-Archivos confidenciales del SO.
 
-En algunos casos, un atacante podría escribir en archivos arbitrarios del servidor, lo que le permitiría modificar datos o comportamientos de la aplicacion y, en ultima instancia, tomar el control total del servidor.
+- Códigos y datos de la aplicación.
+- Credenciales para sistemas del back-end.
+- Archivos confidenciales del SO.
+
+En algunos casos, un atacante podría escribir en archivos arbitrarios del servidor, lo que le permitiría modificar datos o comportamientos de la aplicacion y, en ultima instancia, 
+tomar el control total del servidor.
 
 ## Lectura de archivos a través del path traversal
 
