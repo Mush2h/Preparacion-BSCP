@@ -185,3 +185,38 @@ Este conocimiento de credenciales probables y patrones predecibles significa que
 La enumeración de nombres de usuario es cuando un atacante puede observar cambios en el comportamiento del sitio web para identificar si un nombre de usuario determinado es válido.
 
 La enumeración de nombres de usuario suele ocurrir en la página de inicio de sesión, por ejemplo, cuando se introduce un nombre de usuario válido pero una contraseña incorrecta, o en los formularios de registro cuando se introduce un nombre de usuario que ya está en uso. Esto reduce en gran medida el tiempo y el esfuerzo necesarios para forzar un inicio de sesión, ya que el atacante puede generar rápidamente una lista de nombres de usuario válidos.
+
+## Cómo eludir la autenticación de dos factores
+A veces, la implementación de la autenticación de dos factores es tan defectuosa que puede eludirse por completo.
+
+Si primero se le solicita al usuario que ingrese una contraseña y luego se le solicita que ingrese un código de verificación en una página separada, el usuario estará efectivamente en un estado de "inicio de sesión" antes de haber ingresado el código de verificación. En este caso, vale la pena probar para ver si puede saltar directamente a las páginas de "solo inicio de sesión" después de completar el primer paso de autenticación. Ocasionalmente, encontrará que un sitio web no verifica si completó o no el segundo paso antes de cargar la página.
+
+## ¿Qué es la SSRF?
+La falsificación de solicitud del lado del servidor es una vulnerabilidad de seguridad web que permite a un atacante hacer que la aplicación del lado del servidor realice solicitudes a una ubicación no deseada.
+
+En un ataque SSRF típico, el atacante podría hacer que el servidor se conecte a servicios internos exclusivos dentro de la infraestructura de la organización. En otros casos, es posible que pueda obligar al servidor a conectarse a sistemas externos arbitrarios. Esto podría filtrar datos confidenciales, como credenciales de autorización.
+
+## Ataques SSRF contra el servidor
+En un ataque SSRF contra el servidor, el atacante hace que la aplicación envíe una solicitud HTTP al servidor que la aloja, a través de su interfaz de red de bucle invertido. Esto normalmente implica proporcionar una URL con un nombre de host como 127.0.0.1(una dirección IP reservada que apunta al adaptador de bucle invertido) o localhost(un nombre de uso común para el mismo adaptador).
+
+Por ejemplo, imaginemos una aplicación de compras que permite al usuario ver si un artículo está en stock en una tienda en particular. Para proporcionar la información sobre el stock, la aplicación debe consultar varias API REST de back-end. Para ello, pasa la URL al punto final de la API de back-end correspondiente a través de una solicitud HTTP de front-end. Cuando un usuario ve el estado del stock de un artículo, su navegador realiza la siguiente solicitud:
+
+`POST /product/stock HTTP/1.0
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 118
+
+stockApi=http://stock.weliketoshop.net:8080/product/stock/check%3FproductId%3D6%26storeId%3D1`
+
+Esto hace que el servidor realice una solicitud a la URL especificada, recupere el estado del stock y lo devuelva al usuario.
+
+En este ejemplo, un atacante puede modificar la solicitud para especificar una URL local del servidor:
+
+`POST /product/stock HTTP/1.0
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 118
+
+stockApi=http://localhost/admin`
+
+El servidor obtiene el contenido de la /adminURL y lo devuelve al usuario.
+
+Un atacante puede visitar la /adminURL, pero la funcionalidad administrativa normalmente solo es accesible para usuarios autenticados. Esto significa que un atacante no verá nada de interés. Sin embargo, si la solicitud a la /adminURL proviene de la máquina local, se omiten los controles de acceso normales. La aplicación otorga acceso completo a la funcionalidad administrativa, porque la solicitud parece originarse desde una ubicación confiable.
