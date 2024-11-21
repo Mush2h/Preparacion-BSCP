@@ -62,3 +62,21 @@ Es posible que puedas usar secuencias de recorrido anidadas, como `....//`o `...
 En algunos contextos, como en una ruta URL o en el `filename` parámetro de una `multipart/form-data`solicitud, los servidores web pueden eliminar cualquier secuencia de recorrido de directorio antes de pasar su entrada a la aplicación. A veces, puede evitar este tipo de limpieza codificando la URL o incluso codificando la URL dos veces, `../` lo que da como resultado `%2e%2e%2f`y `%252e%252e%252f`respectivamente. También pueden funcionar varias codificaciones no estándar, como `..%c0%afo` `..%ef%bc%8f`.
 
 Para los usuarios de Burp Suite Professional, Burp Intruder proporciona la lista de carga útil predefinida Fuzzing - path traversal . Esta contiene algunas secuencias de recorrido de ruta codificadas que puede probar.
+
+Una aplicación puede requerir que el nombre de archivo proporcionado por el usuario comience con la carpeta base esperada, como `/var/www/images`. En este caso, podría ser posible incluir la carpeta base requerida seguida de secuencias de recorrido adecuadas. Por ejemplo: filename=/var/www/images/../../../etc/passwd.
+
+Una aplicación puede requerir que el nombre de archivo proporcionado por el usuario termine con una extensión de archivo esperada, como .png. En este caso, podría ser posible usar un byte nulo para terminar efectivamente la ruta del archivo antes de la extensión requerida. Por ejemplo: filename=../../../etc/passwd%00.png.
+
+## Cómo prevenir el ataque
+La forma más eficaz de evitar vulnerabilidades de path traversal es evitar por completo el paso de datos proporcionados por el usuario a las API del sistema de archivos. Muchas funciones de aplicaciones que hacen esto se pueden reescribir para ofrecer el mismo comportamiento de una manera más segura.
+
+Si no puede evitar pasar la información proporcionada por el usuario a las API del sistema de archivos, recomendamos utilizar dos capas de defensa para prevenir ataques:
+
+Valide la entrada del usuario antes de procesarla. Lo ideal es comparar la entrada del usuario con una lista blanca de valores permitidos. Si eso no es posible, verifique que la entrada contenga únicamente contenido permitido, como caracteres alfanuméricos únicamente.
+Después de validar la entrada proporcionada, añada la entrada al directorio base y utilice una API del sistema de archivos de la plataforma para canonizar la ruta. Verifique que la ruta canonizada comience con el directorio base esperado.
+A continuación se muestra un ejemplo de un código Java simple para validar la ruta canónica de un archivo según la entrada del usuario:
+
+File file = new File(BASE_DIRECTORY, userInput);
+if (file.getCanonicalPath().startsWith(BASE_DIRECTORY)) {
+    // process file
+}
