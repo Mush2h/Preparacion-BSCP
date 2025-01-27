@@ -1,4 +1,4 @@
-# path traversal
+# Path traversal
 
 ## Qué es un path traversal
 
