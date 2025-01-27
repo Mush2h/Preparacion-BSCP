@@ -167,6 +167,8 @@ El comportamiento de configuración de cookies ni siquiera necesita existir dent
 ## El token CSRF simplemente se duplica en una cookie
 En otra variación de la vulnerabilidad anterior, algunas aplicaciones no mantienen ningún registro del lado del servidor de los tokens que se han emitido, sino que duplican cada token dentro de una cookie y un parámetro de solicitud. Cuando se valida la solicitud posterior, la aplicación simplemente verifica que el token enviado en el parámetro de solicitud coincida con el valor enviado en la cookie. Esto a veces se denomina defensa de "doble envío" contra CSRF y se recomienda porque es fácil de implementar y evita la necesidad de cualquier estado del lado del servidor:
 
+
+```ruby
 POST /email/change HTTP/1.1
 Host: vulnerable-website.com
 Content-Type: application/x-www-form-urlencoded
@@ -174,4 +176,6 @@ Content-Length: 68
 Cookie: session=1DQGdzYbOJQzLP7460tfyiv3do7MjyPw; csrf=R8ov2YBfTYmzFyjit8o2hKBuoIjXXVpa
 
 csrf=R8ov2YBfTYmzFyjit8o2hKBuoIjXXVpa&email=wiener@normal-user.com
+```
+
 En esta situación, el atacante puede volver a realizar un ataque CSRF si el sitio web contiene alguna funcionalidad de configuración de cookies. En este caso, el atacante no necesita obtener un token válido propio. Simplemente inventa un token (quizás en el formato requerido, si se está verificando), aprovecha el comportamiento de configuración de cookies para colocar su cookie en el navegador de la víctima y le proporciona su token en su ataque CSRF.
