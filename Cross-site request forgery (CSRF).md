@@ -71,7 +71,9 @@ Los mecanismos de entrega de los ataques de falsificación de solicitud entre si
 
 Tenga en cuenta que algunos ataques CSRF simples emplean el método GET y pueden ser completamente autónomos con una única URL en el sitio web vulnerable. En esta situación, es posible que el atacante no necesite emplear un sitio externo y pueda proporcionar directamente a las víctimas una URL maliciosa en el dominio vulnerable. En el ejemplo anterior, si la solicitud para cambiar la dirección de correo electrónico se puede realizar con el método GET, entonces un ataque autónomo se vería así:
 
+```ruby
 <img src="https://vulnerable-website.com/email/change?email=pwned@evil-user.net">
+```
 
 ## Defensas comunes contra el CSRF
 En la actualidad, para encontrar y explotar vulnerabilidades CSRF con éxito, a menudo es necesario eludir las medidas anti-CSRF implementadas por el sitio web de destino, el navegador de la víctima o ambos. Las defensas más comunes con las que te encontrarás son las siguientes:
