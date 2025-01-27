@@ -55,3 +55,13 @@ Si un usuario víctima visita la página web del atacante, ocurrirá lo siguient
 
 ### Nota
 Aunque CSRF normalmente se describe en relación con el manejo de sesiones basado en cookies, también surge en otros contextos donde la aplicación agrega automáticamente algunas credenciales de usuario a las solicitudes, como la autenticación básica HTTP y la autenticación basada en certificados.
+
+# Cómo construir un ataque CSRF
+
+La creación manual del HTML necesario para un exploit CSRF puede ser complicada, en particular cuando la solicitud deseada contiene una gran cantidad de parámetros o existen otras peculiaridades en la solicitud. La forma más sencilla de construir un exploit CSRF es utilizando el generador de PoC CSRF que está integrado en Burp Suite Professional:
+
+- Seleccione una solicitud en cualquier lugar de Burp Suite Professional que desee probar o explotar.
+- Desde el menú contextual del botón derecho, seleccione Herramientas de participación / Generar PoC CSRF.
+- Burp Suite generará algo de HTML que activará la solicitud seleccionada (menos las cookies, que serán agregadas automáticamente por el navegador de la víctima).
+- Puede modificar varias opciones en el generador de PoC CSRF para ajustar aspectos del ataque. Es posible que deba hacer esto en algunas situaciones inusuales para lidiar con características peculiares de las solicitudes.
+- Copie el HTML generado en una página web, véalo en un navegador que haya iniciado sesión en el sitio web vulnerable y pruebe si la solicitud prevista se emite con éxito y si se produce la acción deseada.
