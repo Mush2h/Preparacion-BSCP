@@ -179,3 +179,40 @@ csrf=R8ov2YBfTYmzFyjit8o2hKBuoIjXXVpa&email=wiener@normal-user.com
 ```
 
 En esta situación, el atacante puede volver a realizar un ataque CSRF si el sitio web contiene alguna funcionalidad de configuración de cookies. En este caso, el atacante no necesita obtener un token válido propio. Simplemente inventa un token (quizás en el formato requerido, si se está verificando), aprovecha el comportamiento de configuración de cookies para colocar su cookie en el navegador de la víctima y le proporciona su token en su ataque CSRF.
+
+## Cómo eludir las restricciones de cookies de SameSite
+SameSite es un mecanismo de seguridad del navegador que determina cuándo se incluyen las cookies de un sitio web en las solicitudes que se originan en otros sitios web. Las restricciones de cookies de SameSite brindan protección parcial contra una variedad de ataques entre sitios, incluidos CSRF, fugas entre sitios y algunas vulnerabilidades CORS.
+
+Desde 2021, Chrome aplica Laxrestricciones SameSite de forma predeterminada si el sitio web que emite la cookie no establece explícitamente su propio nivel de restricción. Se trata de un estándar propuesto y esperamos que otros navegadores importantes adopten este comportamiento en el futuro. Como resultado, es esencial tener un conocimiento sólido de cómo funcionan estas restricciones, así como de cómo se pueden eludir, para poder realizar pruebas exhaustivas en busca de vectores de ataque entre sitios.
+
+En esta sección, primero explicaremos cómo funciona el mecanismo SameSite y aclararemos algunos términos relacionados. Luego, veremos algunas de las formas más comunes en las que puede eludir estas restricciones, lo que permite CSRF y otros ataques entre sitios en sitios web que inicialmente pueden parecer seguros.
+
+## ¿Qué es un sitio en el contexto de las cookies de SameSite?
+En el contexto de las restricciones de cookies de SameSite, un sitio se define como el dominio de nivel superior (TLD), generalmente algo como .como .net, más un nivel adicional del nombre de dominio. Esto se suele denominar TLD+1.
+
+Al determinar si una solicitud pertenece o no al mismo sitio, también se tiene en cuenta el esquema de URL. Esto significa que la mayoría de los navegadores consideran que un enlace de `http://app.example.com` a `https://app.example.com` es entre sitios.
+![alt text](image.png)
+### Nota
+Es posible que te encuentres con el término "dominio de nivel superior efectivo" (eTLD). Esto es simplemente una forma de dar cuenta de los sufijos multiparte reservados que se tratan como dominios de nivel superior en la práctica, como .co.uk.
+
+## ¿Cuál es la diferencia entre un sitio y un origen?
+La diferencia entre un sitio y un origen es su alcance: un sitio abarca varios nombres de dominio, mientras que un origen solo incluye uno. Aunque están estrechamente relacionados, es importante no utilizar los términos indistintamente, ya que mezclarlos puede tener graves consecuencias para la seguridad.
+
+Se considera que dos URL tienen el mismo origen si comparten exactamente el mismo esquema, nombre de dominio y puerto. No obstante, tenga en cuenta que el puerto suele inferirse del esquema.
+![alt text](image-1.png)
+
+Como puede ver en este ejemplo, el término "sitio" es mucho menos específico, ya que solo tiene en cuenta el esquema y la última parte del nombre de dominio. Fundamentalmente, esto significa que una solicitud de origen cruzado puede seguir siendo del mismo sitio, pero no al revés.
+
+Solicitud de	Solicitud de	¿Mismo sitio?	¿Mismo origen?
+https://example.com	https://example.com	Sí	Sí
+https://app.example.com	https://intranet.example.com	Sí	No: nombre de dominio no coincidente
+https://example.com	https://example.com:8080	Sí	No: puerto no coincidente
+https://example.com	https://example.co.uk	No: eTLD no coincidente	No: nombre de dominio no coincidente
+https://example.com	http://example.com	No: esquema no coincidente	No: esquema no coincidente
+Esta es una distinción importante, ya que significa que cualquier vulnerabilidad que permita la ejecución arbitraria de JavaScript puede aprovecharse para eludir las defensas basadas en sitios en otros dominios que pertenecen al mismo sitio. Veremos un ejemplo de esto en uno de los laboratorios más adelante.
+
+| Encabezado 1 | Encabezado 2 | Encabezado 3 |
+|--------------|--------------|--------------|
+| Celda 1,1    | Celda 1,2    | Celda 1,3    |
+| Celda 2,1    | Celda 2,2    | Celda 2,3    |
+| Celda 3,1    | Celda 3,2    | Celda 3,3    |
