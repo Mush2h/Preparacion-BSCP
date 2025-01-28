@@ -203,16 +203,13 @@ Se considera que dos URL tienen el mismo origen si comparten exactamente el mism
 
 Como puede ver en este ejemplo, el término "sitio" es mucho menos específico, ya que solo tiene en cuenta el esquema y la última parte del nombre de dominio. Fundamentalmente, esto significa que una solicitud de origen cruzado puede seguir siendo del mismo sitio, pero no al revés.
 
-Solicitud de	Solicitud de	¿Mismo sitio?	¿Mismo origen?
-https://example.com	https://example.com	Sí	Sí
-https://app.example.com	https://intranet.example.com	Sí	No: nombre de dominio no coincidente
-https://example.com	https://example.com:8080	Sí	No: puerto no coincidente
-https://example.com	https://example.co.uk	No: eTLD no coincidente	No: nombre de dominio no coincidente
-https://example.com	http://example.com	No: esquema no coincidente	No: esquema no coincidente
-Esta es una distinción importante, ya que significa que cualquier vulnerabilidad que permita la ejecución arbitraria de JavaScript puede aprovecharse para eludir las defensas basadas en sitios en otros dominios que pertenecen al mismo sitio. Veremos un ejemplo de esto en uno de los laboratorios más adelante.
 
-| Encabezado 1 | Encabezado 2 | Encabezado 3 |
-|--------------|--------------|--------------|
-| Celda 1,1    | Celda 1,2    | Celda 1,3    |
-| Celda 2,1    | Celda 2,2    | Celda 2,3    |
-| Celda 3,1    | Celda 3,2    | Celda 3,3    |
+| Request from | Request to | Same-site? | Same-origin? |
+|-----------|-----------|-----------|-----------|
+| https://example.com | https://example.com| Sí | Sí |
+| https://app.example.com | https://intranet.example.com | Sí | No nombre de dominio no coincidente |
+| https://example.com | https://example.com:8080 | Sí | No puerto no coincidente |
+| https://example.com | https://example.co.uk | No eTLD no coincidente | No nombre de dominio no coincidente |
+| https://example.com | http://example.com | No esquema no coincidente | No esquema no coincidente |
+
+Esta es una distinción importante, ya que significa que cualquier vulnerabilidad que permita la ejecución arbitraria de JavaScript puede aprovecharse para eludir las defensas basadas en sitios en otros dominios que pertenecen al mismo sitio. Veremos un ejemplo de esto en uno de los laboratorios más adelante.
