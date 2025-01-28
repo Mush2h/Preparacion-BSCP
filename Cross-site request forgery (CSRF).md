@@ -213,3 +213,86 @@ Como puede ver en este ejemplo, el término "sitio" es mucho menos específico, 
 | https://example.com | http://example.com | No esquema no coincidente | No esquema no coincidente |
 
 Esta es una distinción importante, ya que significa que cualquier vulnerabilidad que permita la ejecución arbitraria de JavaScript puede aprovecharse para eludir las defensas basadas en sitios en otros dominios que pertenecen al mismo sitio. Veremos un ejemplo de esto en uno de los laboratorios más adelante.
+
+## ¿Cómo funciona SameSite?
+Antes de que se introdujera el mecanismo SameSite, los navegadores enviaban cookies en cada solicitud al dominio que las emitía, incluso si la solicitud la activaba un sitio web de terceros no relacionado. SameSite funciona permitiendo que los navegadores y los propietarios de sitios web limiten qué solicitudes entre sitios, si las hay, deben incluir cookies específicas. Esto puede ayudar a reducir la exposición de los usuarios a ataques CSRF, que inducen al navegador de la víctima a emitir una solicitud que desencadena una acción dañina en el sitio web vulnerable. Como estas solicitudes suelen requerir una cookie asociada con la sesión autenticada de la víctima, el ataque fallará si el navegador no la incluye.
+
+Actualmente, todos los navegadores principales admiten los siguientes niveles de restricción de SameSite:
+
+`Strict`
+`Lax`
+`None`
+
+Los desarrolladores pueden configurar manualmente un nivel de restricción para cada cookie que configuren, lo que les otorga un mayor control sobre cuándo se utilizan dichas cookies. Para ello, solo tienen que incluir el SameSiteatributo en el `Set-Cookie` encabezado de respuesta, junto con su valor preferido:
+
+`Set-Cookie: session=0F8tgdOhi9ynR1M9wa3ODa; SameSite=Strict`
+Si bien esto ofrece cierta protección contra ataques CSRF, ninguna de estas restricciones proporciona inmunidad garantizada, como demostraremos utilizando laboratorios interactivos deliberadamente vulnerables más adelante en esta sección.
+
+### Nota
+Si el sitio web que emite la cookie no establece explícitamente un `SameSite` atributo, Chrome aplica automáticamente `Lax` restricciones de forma predeterminada. Esto significa que la cookie solo se envía en solicitudes entre sitios que cumplen criterios específicos, aunque los desarrolladores nunca hayan configurado este comportamiento. Como se trata de un nuevo estándar propuesto, esperamos que otros navegadores importantes adopten este comportamiento en el futuro.
+
+## Strict
+Si se configura una cookie con el `SameSite=Strict` atributo, los navegadores no la enviarán en ninguna solicitud entre sitios. En términos simples, esto significa que si el sitio de destino de la solicitud no coincide con el sitio que se muestra actualmente en la barra de direcciones del navegador, no se incluirá la cookie.
+
+Esto se recomienda cuando se configuran cookies que permiten al portador modificar datos o realizar otras acciones sensibles, como acceder a páginas específicas que solo están disponibles para usuarios autenticados.
+
+Si bien esta es la opción más segura, puede afectar negativamente la experiencia del usuario en los casos en que es deseable la funcionalidad entre sitios.
+
+## Lax 
+
+`Lax` Las restricciones de SameSite significan que los navegadores enviarán la cookie en solicitudes entre sitios, pero solo si se cumplen las dos condiciones siguientes:
+
+La solicitud utiliza el `GET` método.
+
+La solicitud fue el resultado de una navegación de nivel superior por parte del usuario, como hacer clic en un enlace.
+
+Esto significa que la cookie no se incluye en las solicitudes entre sitios `POST`, por ejemplo. Como `POST` las solicitudes se utilizan generalmente para realizar acciones que modifican datos o estados (al menos según las mejores prácticas), es mucho más probable que sean el objetivo de ataques CSRF.
+
+Asimismo, la cookie no se incluye en solicitudes en segundo plano, como aquellas iniciadas por scripts, iframes o referencias a imágenes y otros recursos.
+
+## None
+
+Si se configura una cookie con el `SameSite=None`atributo, se desactivan por completo las restricciones de SameSite, independientemente del navegador. Como resultado, los navegadores enviarán esta cookie en todas las solicitudes al sitio que la emitió, incluso aquellas que fueron activadas por sitios de terceros completamente ajenos.
+
+Con la excepción de Chrome, este es el comportamiento predeterminado utilizado por los principales navegadores si no `SameSite`se proporciona ningún atributo al configurar la cookie.
+
+Existen motivos legítimos para deshabilitar SameSite, como cuando la cookie está destinada a ser utilizada desde un contexto de terceros y no otorga al portador acceso a ningún dato o funcionalidad confidencial. Las cookies de seguimiento son un ejemplo típico.
+
+Si encuentra una cookie configurada con `SameSite=None`o sin restricciones explícitas, vale la pena investigar si es de alguna utilidad. Cuando Chrome adoptó por primera vez el comportamiento "Lax-by-default", esto tuvo el efecto secundario de interrumpir muchas funciones web existentes. Como solución rápida, algunos sitios web han optado por simplemente deshabilitar las restricciones de SameSite en todas las cookies, incluidas las potencialmente confidenciales.
+
+Al configurar una cookie con `SameSite=None`, el sitio web también debe incluir el Secureatributo , que garantiza que la cookie solo se envíe en mensajes cifrados a través de HTTPS. De lo contrario, los navegadores rechazarán la cookie y no se configurará.
+
+`Set-Cookie: trackingId=0F8tgdOhi9ynR1M9wa3ODa; SameSite=None; Secure`
+
+## Cómo eludir las restricciones de SameSite Lax mediante solicitudes GET
+En la práctica, los servidores no siempre son muy exigentes con respecto a si reciben un mensaje `GET` o `POST`una solicitud a un punto final determinado, incluso aquellos que esperan el envío de un formulario. Si también utilizan `Lax`restricciones para sus cookies de sesión, ya sea de forma explícita o debido a la configuración predeterminada del navegador, es posible que aún pueda realizar un ataque CSRF al obtener una `GET`solicitud del navegador de la víctima.
+
+Mientras la solicitud implique una navegación de nivel superior, el navegador incluirá la cookie de sesión de la víctima. A continuación, se muestra uno de los métodos más sencillos para lanzar un ataque de este tipo:
+
+```ruby
+<script>
+    document.location = 'https://vulnerable-website.com/account/transfer-payment?recipient=hacker&amount=1000000';
+</script>
+```
+`GET` Incluso si no se permite una solicitud normal , algunos frameworks ofrecen formas de anular el método especificado en la línea de solicitud. Por ejemplo, Symfony admite el `_method`parámetro en formularios, que tiene prioridad sobre el método normal para fines de enrutamiento:
+
+```ruby
+<form action="https://vulnerable-website.com/account/transfer-payment" method="POST">
+    <input type="hidden" name="_method" value="GET">
+    <input type="hidden" name="recipient" value="hacker">
+    <input type="hidden" name="amount" value="1000000">
+</form>
+```
+
+Otros marcos admiten una variedad de parámetros similares.
+
+## Cómo eludir las restricciones de SameSite mediante gadgets del sitio
+Si se configura una cookie con el `SameSite=Strict` atributo, los navegadores no la incluirán en ninguna solicitud entre sitios. Es posible que pueda evitar esta limitación si encuentra un gadget que genere una solicitud secundaria dentro del mismo sitio.
+
+Un posible dispositivo es una redirección del lado del cliente que construye dinámicamente el objetivo de la redirección utilizando información controlable por el atacante, como parámetros de URL.
+
+En lo que respecta a los navegadores, estas redirecciones del lado del cliente no son realmente redirecciones en absoluto; la solicitud resultante se trata simplemente como una solicitud normal e independiente. Lo más importante es que se trata de una solicitud del mismo sitio y, como tal, incluirá todas las cookies relacionadas con el sitio, independientemente de las restricciones que estén vigentes.
+
+Si puede manipular este gadget para obtener una solicitud secundaria maliciosa, esto puede permitirle eludir por completo cualquier restricción de cookies de SameSite.
+
+Tenga en cuenta que no es posible realizar un ataque equivalente con redirecciones del lado del servidor. En este caso, los navegadores reconocen que la solicitud para seguir la redirección se originó inicialmente a partir de una solicitud entre sitios, por lo que aún aplican las restricciones de cookies correspondientes.
