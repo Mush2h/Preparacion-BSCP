@@ -191,7 +191,7 @@ En esta sección, primero explicaremos cómo funciona el mecanismo SameSite y ac
 En el contexto de las restricciones de cookies de SameSite, un sitio se define como el dominio de nivel superior (TLD), generalmente algo como .como .net, más un nivel adicional del nombre de dominio. Esto se suele denominar TLD+1.
 
 Al determinar si una solicitud pertenece o no al mismo sitio, también se tiene en cuenta el esquema de URL. Esto significa que la mayoría de los navegadores consideran que un enlace de `http://app.example.com` a `https://app.example.com` es entre sitios.
-![alt text](image.png)
+![alt text](Images/image.png)
 ### Nota
 Es posible que te encuentres con el término "dominio de nivel superior efectivo" (eTLD). Esto es simplemente una forma de dar cuenta de los sufijos multiparte reservados que se tratan como dominios de nivel superior en la práctica, como .co.uk.
 
@@ -199,7 +199,7 @@ Es posible que te encuentres con el término "dominio de nivel superior efectivo
 La diferencia entre un sitio y un origen es su alcance: un sitio abarca varios nombres de dominio, mientras que un origen solo incluye uno. Aunque están estrechamente relacionados, es importante no utilizar los términos indistintamente, ya que mezclarlos puede tener graves consecuencias para la seguridad.
 
 Se considera que dos URL tienen el mismo origen si comparten exactamente el mismo esquema, nombre de dominio y puerto. No obstante, tenga en cuenta que el puerto suele inferirse del esquema.
-![alt text](image-1.png)
+![alt text](Images/image-1.png)
 
 Como puede ver en este ejemplo, el término "sitio" es mucho menos específico, ya que solo tiene en cuenta el esquema y la última parte del nombre de dominio. Fundamentalmente, esto significa que una solicitud de origen cruzado puede seguir siendo del mismo sitio, pero no al revés.
 
