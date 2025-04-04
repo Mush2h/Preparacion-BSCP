@@ -15,11 +15,4 @@ Este repositorio contiene recursos y resúmenes que utilizo para preparar la cer
 - Extensiones útiles
 - Tips para escaneo y explotación
 
-### 3. Preparación para el Examen
-- Estrategias de tiempo
-- Consejos para resolver los desafíos
-
-## Contribuciones
-
-¡Las contribuciones son bienvenidas! Si tienes sugerencias o quieres añadir información útil, no dudes en abrir un pull request.
 
