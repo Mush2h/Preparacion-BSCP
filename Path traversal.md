@@ -2,7 +2,7 @@
 
 ## Qué es un path traversal
 
-El path traversal también conocido como recorrido de direcctorio. Estas vulnerabilidades permiten a un atacante leer archivos arbitrarios en el servidor que ejecuta en una aplicación.
+El path traversal también conocido como directory traversal. Estas vulnerabilidades permiten a un atacante leer archivos arbitrarios en el servidor que ejecuta en una aplicación.
 
 Esto podría incluir:
 
@@ -10,11 +10,9 @@ Esto podría incluir:
 - Credenciales para sistemas del back-end.
 - Archivos confidenciales del SO.
 
-En algunos casos, un atacante podría escribir en archivos arbitrarios del servidor, lo que le permitiría modificar datos o comportamientos de la aplicacion y, en ultima instancia, 
-tomar el control total del servidor.
+En algunos casos, un atacante podría escribir en archivos arbitrarios del servidor, lo que le permitiría modificar datos o comportamientos de la aplicacion y, en ultima instancia, tomar el control total del servidor.
 
-## Lectura de archivos arbitrarios a través del recorrido de ruta
-
+## Lectura de archivos arbitrarios via path traversal
 Imagine una aplicación de compras que muestra imágenes de artículos en venta. Esta podría cargar una imagen utilizando el siguiente código HTML:
 
 ```ruby
@@ -27,7 +25,7 @@ La loadImageURL toma un `filename` parámetro y devuelve el contenido del archiv
 /var/www/images/218.png
 ```
 
-Esta aplicación no implementa defensas contra ataques de cruce de ruta. Como resultado, un atacante puede solicitar la siguiente URL para recuperar el `/etc/passwd` archivo del sistema de archivos del servidor:
+Esta aplicación no implementa defensas contra ataques de path traversal. Como resultado, un atacante puede solicitar la siguiente URL para recuperar el `/etc/passwd` archivo del sistema de archivos del servidor:
 
 ```ruby
 https://insecure-website.com/loadImage?filename=../../../etc/passwd
@@ -37,17 +35,22 @@ Esto hace que la aplicación lea desde la siguiente ruta de archivo:
 
 `/var/www/images/../../../etc/passwd`
 
-La secuencia ../es válida dentro de una ruta de archivo y significa subir un nivel en la estructura de directorios. Las tres ../secuencias consecutivas suben de nivel desde /var/www/images/la raíz del sistema de archivos, por lo que el archivo que se lee en realidad es:
+La secuencia ../ es válida dentro de una ruta de archivo y significa subir un nivel en la estructura de directorios. Las tres ../ en secuencias consecutivas suben de nivel desde /var/www/images/ a la raíz del sistema de archivos, por lo que el archivo que se lee en realidad es:
 
 `/etc/passwd`
 
 En los sistemas operativos basados ​​en Unix, este es un archivo estándar que contiene detalles de los usuarios registrados en el servidor, pero un atacante podría recuperar otros archivos arbitrarios utilizando la misma técnica.
 
-En Windows, tanto ../y como ..\son secuencias válidas de recorrido de directorio. El siguiente es un ejemplo de un ataque equivalente contra un servidor basado en Windows:
+En Windows, tanto ../ y como ..\ son secuencias válidas de path traversal. El siguiente es un ejemplo de un ataque equivalente contra un servidor basado en Windows:
 
 ```ruby
 https://insecure-website.com/loadImage?filename=..\..\..\windows\win.ini
 ```
+
+Laboratorio: File path traversal , caso simple.
+
+
+
 
 ## Obstáculos comunes para explotar vulnerabilidades de recorrido de ruta
 
