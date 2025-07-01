@@ -107,6 +107,13 @@ https://web-security-academy.net/filter?category=' union select NULL,table_name 
 https://web-security-academy.net/filter?category=' union select NULL,table_name from information_schema.tables where table_schema='academy_labs'-- -
 ```
 
+### Reto 4: ataque de inyección SQL, que enumera el contenido de la base de datos en bases de datos que no son de Oracle
 
-## ¿Qué es server-side template injection ?
+Este laboratorio contiene una vulnerabilidad de inyección SQL en el filtro de categoría de producto. Los resultados de la consulta se devuelven en la respuesta de la aplicación para que pueda utilizar un ataque UNION para recuperar datos de otras tablas.
+
+La aplicación tiene una función de inicio de sesión y la base de datos contiene una tabla que contiene nombres de usuario y contraseñas. Debe determinar el nombre de esta tabla y las columnas que contiene, luego recuperar el contenido de la tabla para obtener el nombre de usuario y la contraseña de todos los usuarios.
+
+Para resolver el laboratorio, inicie sesión como administrador usuario.
+
+## ¿Qué es una SQLI ?
 
