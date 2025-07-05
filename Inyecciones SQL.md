@@ -589,5 +589,11 @@ if __name__ == "__main__":
 
 ```
 
+## Reto 13: Inyección SQL basada en errores visibles
+Este laboratorio contiene una vulnerabilidad de inyección SQL. La aplicación utiliza una cookie de seguimiento para análisis y realiza una consulta SQL que contiene el valor de la cookie enviada. No se devuelven los resultados de la consulta SQL.
+
+La base de datos contiene una tabla diferente llamada users, con columnas llamadas username y passwordPara resolver el laboratorio, encuentre una forma de filtrar la contraseña. administratorusuario, luego inicie sesión en su cuenta. 
+
+
 ## ¿Qué es una SQLI ?
 
