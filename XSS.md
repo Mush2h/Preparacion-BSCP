@@ -116,3 +116,34 @@ Podemos usar `<iframe>` para meter una página web dentro de otra y concatenar l
 ```
 <iframe src="https://url.burp/#" onload="this.src +='<img src=0 onerror=print()>'"><iframe>
 ```
+## Reto 7: XSS reflejado en atributo con corchetes angulares codificado en HTML
+
+Este laboratorio contiene una vulnerabilidad reflejada de secuencias de comandos entre sitios en la función de búsqueda de blogs, donde los corchetes angulares están codificados en HTML. 
+
+Para resolver este laboratorio, realice un ataque de secuencias de comandos entre sitios que inyecte un atributo y llame a alert(). 
+
+
+Este XSS reflejado que no ocurre dentro del cuerpo de una etiqueta HTML, sino dentro de un atributo. La aplicación codifica los signos angulares para evitar que se abran etiquetas directamente, pero permite inyectar contenido dentro de valores entre comillas.
+
+La funcionalidad vulnerable es el buscador del blog. Al introducir un valor en el cuadro de búsqueda, este se refleja dentro de un atributo HTML en la respuesta. Usando herramientas como Burp Suite, interceptamos la petición y comprobamos que nuestro valor aparece entre comillas dentro de ese atributo.
+
+``` html
+<input type="text" placeholder="Search the blog..." name="search" value="<h1>HOLA</h1>">
+```
+
+Vemos que si usamos el típico del script lo encodea y hace que no se pueda disparar la alerta 
+```html
+<input type="text" placeholder="Search the blog..." name="search" value="" &gt;&lt;script&gt;alert(0)&lt;="" script&gt;"="">
+```
+
+La estrategia consiste en cerrar el valor actual del atributo e introducir uno nuevo que contenga un manejador de eventos (por ejemplo, uno que se active al pasar el ratón). Al acceder a la URL modificada y mover el cursor sobre el área afectada, se ejecuta el código inyectado, demostrando que la inyección fue exitosa.
+
+si hacemos las siguiente inyección:
+
+```
+'" onmouseover="alert(0)'
+```
+
+```html
+<input type="text" placeholder="Search the blog..." name="search" value="" onmouseover="alert(0)">
+```
