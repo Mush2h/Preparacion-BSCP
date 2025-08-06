@@ -147,3 +147,219 @@ si hacemos las siguiente inyección:
 ```html
 <input type="text" placeholder="Search the blog..." name="search" value="" onmouseover="alert(0)">
 ```
+
+## Reto 8: XSS almacenado en el enlace href como atributo con comillas dobles codificado en HTML
+
+Este laboratorio contiene una vulnerabilidad de secuencias de comandos entre sitios almacenada en la función de comentarios. Para resolver este laboratorio, envíe un comentario que invoque la función alertFunción cuando se hace clic en el nombre del autor del comentario. 
+
+El XSS almacenado que se produce dentro de un atributo de tipo enlace (href). La funcionalidad vulnerable es el sistema de comentarios del blog, que permite introducir un nombre, correo y un sitio web. El valor del sitio web se utiliza como destino en un enlace generado automáticamente alrededor del nombre del autor del comentario.
+
+El sistema codifica las comillas dobles, pero no valida ni restringe el contenido del enlace. Esto permite introducir un esquema especial como dirección, el cual no apunta a una página web sino que ejecuta directamente código cuando el usuario hace clic.
+
+Aprovechamos este comportamiento para insertar un valor que desencadena una acción maliciosa cuando alguien interactúa con el nombre del autor. Al tratarse de un XSS almacenado, el código queda persistente en la aplicación y se ejecutará para cualquier visitante que visualice ese comentario.
+
+
+<a id="author" href="javascript:alert(0)">test</a>
+
+## Reto 9: XSS reflejado en una cadena de JavaScript con corchetes angulares codificados en HTML 
+Este laboratorio contiene una vulnerabilidad de secuencias de comandos entre sitios reflejada en la funcionalidad de seguimiento de consultas de búsqueda, donde se codifican los corchetes angulares. La reflexión ocurre dentro de una cadena de JavaScript. Para resolver este laboratorio, realice un ataque de secuencias de comandos entre sitios que interrumpa la cadena de JavaScript e invoque la función alert. 
+
+La funcionalidad afectada es el sistema de seguimiento de búsquedas. Al introducir una consulta, el valor se refleja en una variable JavaScript como parte de una cadena. Esto permite al atacante cerrar esa cadena con comillas o caracteres especiales, insertar código adicional, y continuar la ejecución sin generar errores de sintaxis.
+
+para nuestro ejemplo tendriamos que modificar el script y poner el en buscador lo siguiente:
+
+```
+'testing'; alert(0); var testing='probando
+```
+
+Utilizamos este enfoque para romper la cadena original y ejecutar una función maliciosa teniendo en cuneta si se cierra con las comillas la sentencia y modificandola, demostrando así que la inyección es posible a pesar del filtrado parcial.
+
+## Reto 10:Laboratorio: DOM XSS en document.writesumidero usando fuente location.searchdentro de un elemento seleccionado
+
+Este laboratorio contiene una vulnerabilidad de secuencias de comandos entre sitios basada en DOM en la funcionalidad de verificación de acciones. Utiliza JavaScript. document.writefunción, que escribe datos en la página. La document.write La función se llama con datos de location.search Que se puede controlar mediante la URL del sitio web. Los datos se incluyen en un elemento de selección.
+
+Para resolver este laboratorio, realice un ataque de secuencias de comandos entre sitios que salga del elemento de selección y llame al alert función. 
+
+```js
+    var stores = ["London","Paris","Milan"];
+    var store = (new URLSearchParams(window.location.search)).get('storeId');
+    document.write('<select name="storeId">');
+    if(store) {
+        document.write('<option selected>'+store+'</option>');
+    }
+    for(var i=0;i<stores.length;i++) {
+        if(stores[i] === store) {
+            continue;
+        }
+        document.write('<option>'+stores[i]+'</option>');
+    }
+        document.write('</select>');
+```
+En la Url tenemos que intentar agregar nuestra seleccion y forzar la alerta escapando de la funcion select
+
+productId=1&storeId=</option></select><script>alert(0)</script>
+
+## Reto 11: XSS de DOM reflejado
+
+Este laboratorio demuestra una vulnerabilidad de DOM reflejado. Las vulnerabilidades de DOM reflejado ocurren cuando la aplicación del servidor procesa datos de una solicitud y los reproduce en la respuesta. Un script en la página procesa los datos reflejados de forma insegura, escribiéndolos finalmente en un receptor peligroso.
+
+Para resolver este laboratorio, cree una inyección que llame a la alert() función.
+
+
+La funcionalidad vulnerable está en el buscador del sitio. Al realizar una búsqueda, el término ingresado se refleja en un archivo JSON de resultados que podemos verlo usando la aplicación de burpsuite. Este contenido es posteriormente procesado por un script que usa una función (eval()) que interpreta dinámicamente texto como si fuera código, abriendo la puerta a una inyección si no se escapan correctamente ciertos caracteres.
+
+Aunque el sistema escapa comillas, no hace lo mismo con otros símbolos clave, como la barra invertida. Esto nos permite construir un valor malicioso que rompe la estructura del objeto y añade una instrucción personalizada, haciendo que se ejecute directamente en el navegador.
+
+la sentencia seria la siguiente:
+
+- Cerramos la sentencia con la \
+- Usamos una operacion aritmetica esto lo podemos hacer porque se emplea la funcion eval()
+- Realizamos nuestra funcion maliciosa para que se ejecute
+
+```bash
+testing\"*alert(0)}// 
+```
+
+## Reto 12: Xss de DOM almacenado
+
+Este laboratorio demuestra una vulnerabilidad de DOM almacenado en la funcionalidad de comentarios del blog. Para resolver este laboratorio, explote esta vulnerabilidad para llamar a alert() función.
+
+La funcionalidad vulnerable se encuentra en el sistema de comentarios del blog. Para prevenir ataques, el sitio aplica una función de reemplazo que intenta codificar los signos angulares, pero lo hace incorrectamente: solo reemplaza la primera aparición en lugar de todas porque usa la funcion replace y no replaceAll.
+
+```javascript
+    function escapeHTML(html) {
+        return html.replace('<', '&lt;').replace('>', '&gt;');
+    }
+```
+
+Aprovechamos este fallo insertando un par adicional de signos al principio del comentario. Estos primeros caracteres serán codificados y neutralizados, pero los siguientes no serán tocados, permitiendo que el navegador interprete y ejecute el contenido malicioso cuando se carga la página.
+
+La solucion sería la siguiente:
+
+```html
+<><script>alert(0)</script>
+```
+Se puede apreciar que no funciona pero tenemos otras alternativas pudiendo usar la siguiente:
+
+```html
+<><img src=0 onerror=alert(0)>
+```
+
+## Reto 13: 
+My account
+Products
+Solutions
+Research
+Academy
+Support
+Customers
+About
+Blog
+Careers
+Legal
+Contact
+Resellers
+Customers
+About
+Blog
+Careers
+Legal
+Contact
+Resellers
+Burp Suite DAST Burp Suite DAST The enterprise-enabled dynamic web vulnerability scanner.
+Suite Burp Professional Burp Suite Professional El kit de herramientas de pruebas de penetración web número uno del mundo.
+Edición comunitaria de Burp Suite Burp Suite Community Edition: Las mejores herramientas manuales para empezar a realizar pruebas de seguridad web.
+Ver todas las ediciones del producto.
+
+Burp Scanner
+
+Escáner de vulnerabilidades web de Burp Suite
+El escáner de vulnerabilidades web de Burp Suite
+Attack surface visibility Improve security posture, prioritize manual testing, free up time.
+CI-driven scanning More proactive security - find and fix vulnerabilities earlier.
+Application security testing See how our software enables the world to secure the web.
+DevSecOps Catch critical bugs; ship more secure software, more quickly.
+Penetration testing Accelerate penetration testing - find more bugs, more quickly.
+Automated scanning Scale dynamic scanning. Reduce risk. Save time/money.
+Bug bounty hunting Level up your hacking and earn more bug bounties.
+Compliance Enhance security monitoring to comply with confidence.
+Ver todas las soluciones
+
+Product comparison
+
+¿Cuál es la diferencia entre Pro y Enterprise Edition?
+Burp Suite Professional vs. Burp Suite Enterprise Edition
+Support Center Get help and advice from our experts on all things Burp.
+Documentation Tutorials and guides for Burp Suite.
+Get Started - Professional Get started with Burp Suite Professional.
+Get Started - Enterprise Get started with Burp Suite Enterprise Edition.
+User Forum Get your questions answered in the User Forum.
+Downloads Download the latest version of Burp Suite.
+Visita el Centro de soporte
+
+Downloads
+
+Descargue la última versión de Burp Suite.
+La última versión del software Burp Suite para descargar
+
+    Dashboard
+    Learning paths
+    Latest topics
+    All content
+    Hall of Fame
+    Get started
+    Get certified
+
+Volver a todos los temas
+
+    ¿Qué es XSS?
+    ¿Cómo funciona XSS?
+    Impacto de un ataque
+    Prueba de concepto
+    Pruebas
+    XSS reflejado
+    XSS almacenado
+    XSS basado en DOM
+    Contextos XSS
+    Explotación de vulnerabilidades XSS
+    Inyección de marcado colgante
+    Política de seguridad de contenido (CSP)
+    Prevención de ataques XSS
+    Hoja de trucos
+    Ver todos los laboratorios XSS
+
+    Academia de Seguridad Web
+    Scripting entre sitios
+    Contextos
+    Laboratorio 
+
+## Reto 14: XSS reflejado en contexto HTML con la mayoría de las etiquetas y atributos bloqueados
+
+
+Este laboratorio contiene una vulnerabilidad XSS reflejada en la funcionalidad de búsqueda, pero utiliza un firewall de aplicaciones web (WAF) para protegerse contra vectores XSS comunes.
+
+Para resolver el laboratorio, realice un ataque de secuencias de comandos entre sitios que evite el WAF y llame al print() función.
+
+Nota
+Su solución no debe requerir ninguna interacción del usuario. Causar manualmente print()Llamarlo en su propio navegador no resolverá el laboratorio.
+
+La funcionalidad vulnerable es un buscador, donde el valor introducido se refleja directamente en el contenido HTML. Intentos clásicos de inyección son rechazados, por lo que utilizamos una estrategia sistemática con ayuda de Burp Suite.
+
+Con Burp Intruder, realizamos una prueba automatizada enviando distintas etiquetas HTML y atributos, observando cuáles generan respuestas válidas. Detectamos que la etiqueta ```<body>``` y el atributo ```onresize``` no son filtrados. A partir de ahí, construimos un vector usando un contenedor invisible que al cargarse activa un evento de cambio de tamaño, el cual ejecuta directamente una función del navegador.
+
+la url quedaria de la siguiente manera:
+
+```
+https://url/?search=<body onresize=print()>
+```
+
+La prueba se completa al entregar el vector a una víctima a través de un servidor de explotación, validando así que la ejecución ocurre sin necesidad de clics o interacción adicional.
+
+Para mandarlo a la víctima podemos utilizar el tag ```<iframe>``` y ademas de forzar a que cuando se cargue la pantalla haga el resize 
+de la siguiente forma:
+
+```
+<iframe src="https://url/?search=<body onresize=print()>" onload=this.style.with='100px'></iframe>
+```
+
+
