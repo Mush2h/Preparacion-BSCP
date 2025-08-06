@@ -392,3 +392,24 @@ La explicación por partes:
 ```tabindex=1```: Esto hace que el elemento pueda recibir foco al navegar con el teclado (tabulación).
 
 ```#x```: El fragmento de anclaje de la URL hace que el navegador intente hacer foco en el elemento con id="x".
+
+
+## Reto 16: Laboratorio: XSS reflejado con algún marcado SVG permitido
+
+Este laboratorio presenta una vulnerabilidad XSS reflejada simple. El sitio bloquea etiquetas comunes, pero omite algunas etiquetas y eventos SVG.
+
+Para resolver el laboratorio, realice un ataque de secuencias de comandos entre sitios que llame al alert() función.  
+
+La vulnerabilidad está en el buscador, que refleja la entrada del usuario directamente en la respuesta. Aunque intentos típicos de inyección son bloqueados, realizamos un análisis sistemático usando Burp Intruder para descubrir qué etiquetas y atributos aún son aceptados por el sistema.
+
+Tras probar múltiples combinaciones, identificamos que algunas etiquetas del entorno SVG, como svg y animatetransform, junto con eventos como onbegin, no son filtradas y permiten la ejecución de código al momento de cargarse la página.
+
+Para resolver el laboratorio seria algo asi:
+
+```
+/?search=<svg><animateTransform%20onbegin=alert(0)>
+```
+
+
+Aprovechamos esto para construir un vector que, sin intervención del usuario, desencadena una función en el navegador al iniciarse la animación SVG, completando con éxito el laboratorio.
+
