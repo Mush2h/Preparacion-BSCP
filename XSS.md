@@ -362,4 +362,33 @@ de la siguiente forma:
 <iframe src="https://url/?search=<body onresize=print()>" onload=this.style.with='100px'></iframe>
 ```
 
+## Reto 15: XSS reflejado en contexto HTML con todas las etiquetas bloqueadas excepto las personalizadas
 
+Este laboratorio bloquea todas las etiquetas HTML excepto las personalizadas.
+
+Para resolver el laboratorio, realice un ataque de secuencias de comandos entre sitios que inyecte una etiqueta personalizada y alerte automáticamente document.cookie. 
+
+La aplicación ha bloqueado por completo todas las etiquetas HTML estándar, permitiendo únicamente etiquetas personalizadas. Este tipo de configuración busca prevenir inyecciones, pero aún puede ser burlada si no se filtran los atributos o eventos correctamente.
+
+Utilizamos un servidor de explotación para construir un vector que incluye una etiqueta inventada, con un identificador específico y un evento que se activa al enfocar ese elemento. Al añadir un fragmento al final de la URL que apunta a esa etiqueta personalizada, el navegador intenta enfocarla automáticamente al cargar la página, lo que desencadena la ejecución del código malicioso sin necesidad de interacción del usuario.
+
+Este laboratorio demuestra cómo incluso etiquetas no estándar pueden ser vehículos válidos para ataques XSS si los atributos y eventos no son controlados adecuadamente, reforzando la importancia de validar todo el contenido, no solo el nombre de la etiqueta.
+
+En nuestro caso he empleado 
+```html
+<script>
+location='https://0a2d009f034a933080bc03fe00d40072.web-security-academy.net/?search=<etiqueta id=x onfocus=alert(document.cookie) tabindex=1>#x';
+</script>
+```
+
+La explicación por partes:
+
+```<etiqueta ...>```: Aquí se usa una etiqueta falsa (no estándar). Algunos navegadores la interpretan igual que una etiqueta HTML personalizada.
+
+```id=x```: Se le da un ID para que pueda ser referenciada por el hash al final de la URL.
+
+```onfocus=alert(document.cookie)```: Este es el evento malicioso. Cuando el elemento recibe foco (focus), se ejecuta alert(document.cookie) mostrando las cookies del sitio.
+
+```tabindex=1```: Esto hace que el elemento pueda recibir foco al navegar con el teclado (tabulación).
+
+```#x```: El fragmento de anclaje de la URL hace que el navegador intente hacer foco en el elemento con id="x".
