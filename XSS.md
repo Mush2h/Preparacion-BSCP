@@ -413,3 +413,40 @@ Para resolver el laboratorio seria algo asi:
 
 Aprovechamos esto para construir un vector que, sin intervención del usuario, desencadena una función en el navegador al iniciarse la animación SVG, completando con éxito el laboratorio.
 
+## Reto 17: XSS reflejado en la etiqueta de enlace canónico
+
+
+Este laboratorio refleja la entrada del usuario en una etiqueta de enlace canónica y escapa de los corchetes angulares.
+
+Para resolver el laboratorio, realice un ataque de secuencias de comandos entre sitios en la página de inicio que inyecte un atributo que llame al alert función.
+
+Para facilitar su explotación, puede asumir que el usuario simulado presionará las siguientes combinaciones de teclas:
+
+```txt
+    ALT+SHIFT+X
+    CTRL+ALT+X
+    Alt+X
+```
+
+Tenga en cuenta que la solución prevista para este laboratorio solo es posible en Chrome. 
+
+Aprovechamos este comportamiento para insertar atributos como accesskey y onclick, que nos permiten asociar una acción concreta en este caso, la ejecución de código a una combinación específica de teclas.
+
+El exploit se construye de forma que, al presionar una combinación como Alt+Shift+X, el navegador dispare un evento que ejecuta la función deseada. Aunque no ocurre de forma automática al cargar la página, se considera válida ya que no requiere interacción directa con el contenido visible ni clics por parte del usuario.
+```html
+<link rel="canonical" href='https://0ac3004004ca247180541c3a00d10055.web-security-academy.net/?'accesskey='x'onclick='alert(0)'/>
+```
+
+## Reto 18: XSS reflejado en una cadena de JavaScript con comillas simples y barra invertida como caracteres de escape
+
+Este laboratorio contiene una vulnerabilidad reflejada de secuencias de comandos entre sitios en la función de seguimiento de consultas de búsqueda. La reflexión se produce dentro de una cadena de JavaScript con comillas simples y barras invertidas de escape.
+
+Para resolver este laboratorio, realice un ataque de secuencias de comandos entre sitios que rompa la cadena de JavaScript y llame al alert función
+
+Al intentar romper la cadena directamente, observamos que los caracteres clave quedan neutralizados, impidiendo ejecutar código dentro del mismo contexto. La estrategia, entonces, consiste en cerrar la etiqueta de script actual e insertar una nueva, completamente separada, que contenga la instrucción maliciosa.
+
+```html
+'</script><script>alert(0)</script>'
+```
+
+De este modo, el contenido inyectado no depende de romper la cadena desde dentro, sino de interrumpir el bloque de código y generar uno nuevo fuera del contexto protegido. El navegador interpreta esta estructura como válida, permitiendo la ejecución de la función deseada.
