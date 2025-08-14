@@ -450,3 +450,35 @@ Al intentar romper la cadena directamente, observamos que los caracteres clave q
 ```
 
 De este modo, el contenido inyectado no depende de romper la cadena desde dentro, sino de interrumpir el bloque de código y generar uno nuevo fuera del contexto protegido. El navegador interpreta esta estructura como válida, permitiendo la ejecución de la función deseada.
+
+## Reto 19: XSS reflejado en una cadena de JavaScript con corchetes angulares y comillas dobles codificadas en HTML y comillas simples escapadas
+
+Este laboratorio contiene una vulnerabilidad de secuencias de comandos entre sitios reflejada en la funcionalidad de seguimiento de consultas de búsqueda, donde los corchetes angulares y los dobles están codificados en HTML y las comillas simples se escapan.
+
+Para resolver este laboratorio, realice un ataque de secuencias de comandos entre sitios que rompa la cadena de JavaScript y llame al alert función. 
+
+El valor reflejado del buscador se inserta en una variable delimitada por comillas simples. En este caso, las comillas simples están escapadas correctamente, y tanto los signos angulares como las comillas dobles están codificados como entidades HTML.
+
+Sin embargo, la clave está en que las barras invertidas no se escapan, lo que nos permite introducir una de forma manual y romper el contexto de la cadena desde fuera.
+
+```bash
+test\'+alert(0);//
+```
+
+Aprovechamos esta debilidad insertando una barra invertida seguida de una comilla escapada que finaliza la cadena, y después inyectamos una instrucción directa, separándola del código original con un operador y comentarios para evitar errores de sintaxis.
+
+## Reto 20: XSS almacenado en onclickevento con corchetes angulares y comillas dobles codificadas en HTML y comillas simples y barra invertida escapadas
+
+Este laboratorio contiene una vulnerabilidad de secuencias de comandos entre sitios almacenada en la funcionalidad de comentarios.
+
+Para resolver este laboratorio, envíe un comentario que llame al alertFunción cuando se hace clic en el nombre del autor del comentario. 
+
+El sistema aplica múltiples medidas de protección: codifica los signos angulares y las comillas dobles como entidades HTML, y además escapa tanto las comillas simples como las barras invertidas. Sin embargo, al observar cuidadosamente cómo se construye el atributo, descubrimos que aún podemos romper la estructura si inyectamos un valor cuidadosamente diseñado.
+
+Utilizamos un valor de URL que contiene una secuencia manipulada para cerrar el contexto del atributo y ejecutar una función directamente. El carácter de escape que normalmente neutralizaría la comilla es absorbido por la estructura de la URL, permitiendo que el código se ejecute al hacer clic sobre el nombre del autor.
+
+```html
+https://probando.com&apos;+alert(0)+&apos;
+```
+
+## Reto 21:
