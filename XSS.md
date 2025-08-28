@@ -620,3 +620,17 @@ La animación se activa de forma implícita al interactuar con el contenido, y d
 ```html
 <svg><a><animate attributeName=href values=javascript:alert(0) /><text>Click me!</text></a>
 ```
+
+## Reto 28:XSS reflejado en una URL de JavaScript con algunos caracteres bloqueados
+
+Este laboratorio refleja tu entrada en una URL de JavaScript, pero no todo es lo que parece. Inicialmente, parece un desafío trivial; sin embargo, la aplicación bloquea algunos caracteres para evitar ataques XSS.
+
+Para resolver el laboratorio, realice un ataque de secuencias de comandos entre sitios que llame al alertfunción con la cadena 1337contenido en algún lugar de la alert mensaje. 
+
+El objetivo es perfeccionar el uso de estructuras complejas del lenguaje para forzar la ejecución del código. Mantenemos el enfoque en el uso de funciones flecha que permiten utilizar sentencias como throw, normalmente no válidas en expresiones, y combinamos esta técnica con la redefinición de propiedades internas como toString.
+
+Al forzar la conversión del objeto window a cadena, conseguimos activar la ejecución sin llamar a la función explícitamente. Esta variante demuestra cómo JavaScript puede ser manipulado para lograr ejecución de código incluso en contextos altamente filtrados, sin necesidad de paréntesis, comillas ni llamadas directas.
+
+```html
+<a href="javascript:fetch('/analytics', {method:'post',body:'/post?postId=1'},x=x=>{throw/**/onerror=alert,1337},toString=x,window+'',{x:''}).finally(_ => window.location = '/')">Back to Blog</a>
+```
