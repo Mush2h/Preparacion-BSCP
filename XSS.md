@@ -634,3 +634,14 @@ Al forzar la conversión del objeto window a cadena, conseguimos activar la ejec
 ```html
 <a href="javascript:fetch('/analytics', {method:'post',body:'/post?postId=1'},x=x=>{throw/**/onerror=alert,1337},toString=x,window+'',{x:''}).finally(_ => window.location = '/')">Back to Blog</a>
 ```
+
+## Reto 29:XSS reflejado protegido por CSP muy estricto, con ataque de marcado colgante
+
+Este laboratorio utiliza un CSP estricto que bloquea las solicitudes salientes a sitios web externos.
+
+Para resolver el laboratorio, primero realice un ataque de secuencias de comandos entre sitios que evite el CSP y exfiltre el token CSRF de una víctima simulada mediante Burp Collaborator. A continuación, deberá cambiar la dirección de correo electrónico del usuario simulado a hacker@evil-user.net.
+
+Debes etiquetar tu vector con la palabra "Clic" para inducir al usuario simulado a hacer clic. Por ejemplo:
+<a href="">Click me</a>
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
