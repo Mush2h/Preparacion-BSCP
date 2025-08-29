@@ -296,3 +296,8 @@ En lo que respecta a los navegadores, estas redirecciones del lado del cliente n
 Si puede manipular este gadget para obtener una solicitud secundaria maliciosa, esto puede permitirle eludir por completo cualquier restricción de cookies de SameSite.
 
 Tenga en cuenta que no es posible realizar un ataque equivalente con redirecciones del lado del servidor. En este caso, los navegadores reconocen que la solicitud para seguir la redirección se originó inicialmente a partir de una solicitud entre sitios, por lo que aún aplican las restricciones de cookies correspondientes.
+
+
+## Reto 1:
+
+
