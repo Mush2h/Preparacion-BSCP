@@ -420,6 +420,11 @@ Para explotarlo:
     - Realiza una búsqueda maliciosa para setear la cookie csrfKey deseada.
     - Luego, una vez inyectada, envía el formulario con el token capturado, consiguiendo cambiar el email de la víctima.
 
+El ataque se desarrolla en dos fases:
+
+- Inyección de la cookie ‘csrfKey‘ en el navegador víctima mediante una URL de búsqueda que fuerza al servidor a emitir un encabezado ‘Set-Cookie‘ reflejado.
+
+- Envío del formulario CSRF con el token correspondiente, haciendo uso de la cookie previamente establecida
 
 
 ```html
