@@ -46,3 +46,17 @@ El ataque consiste en enviar desde un iframe un mensaje JSON con un campo type e
 ```html
 <iframe src=https://0a7900b303e3ee3d80bcbce100c8005e.web-security-academy.net/ onload='this.contentWindow.postMessage("{\"type\":\"load-channel\",\"url\":\"javascript:print()\"}","*")'>
 ```
+
+## Reto 4: Redirección abierta basada en DOM
+
+Este laboratorio contiene una vulnerabilidad de redirección abierta basada en DOM. Para solucionarlo, explote esta vulnerabilidad y redirija a la víctima al servidor de exploits. 
+
+En este laboratorio nos enfrentamos a una vulnerabilidad de tipo open redirection basada en el DOM. El comportamiento vulnerable se produce al hacer clic en un enlace que evalúa un parámetro url directamente desde el fragmento del location.href sin realizar ninguna validación.
+
+El enlace ejecuta un pequeño script que extrae con una expresión regular el valor del parámetro url y redirige al usuario allí, lo cual puede ser aprovechado para enviar a la víctima a un dominio externo controlado por un atacante.
+
+Para explotar el fallo, construimos una URL que apunta al sitio vulnerable incluyendo como valor del parámetro url la dirección del exploit server. Cuando la víctima accede, se realiza la redirección automática hacia el servidor del atacante.
+
+```http
+https://0aa800200443f2df80d1b78b007a0078.web-security-academy.net/post?postId=10&url=https://exploit-0a8000cb04f7f2df80c1b62001860024.exploit-server.net/
+```
