@@ -65,6 +65,12 @@ https://0aa800200443f2df80d1b78b007a0078.web-security-academy.net/post?postId=10
 
 Este laboratorio demuestra la manipulación de cookies del lado del cliente basada en DOM. Para resolver este laboratorio, inyecte una cookie que cause un XSS en una página diferente y llame a la print()Función. Necesitará usar el servidor de exploits para dirigir a la víctima a las páginas correctas. 
 
+En este laboratorio trabajamos con una vulnerabilidad de tipo XSS basada en la manipulación de cookies mediante JavaScript en el lado del cliente. La web almacena en una cookie llamada lastViewedProduct la última URL de producto visitada, la cual es luego procesada sin validación.
+
+El ataque consiste en forzar a la víctima a cargar una URL de producto con código malicioso embebido, lo que provoca que dicha URL sea almacenada como cookie. Justo después, la víctima es redirigida a la página de inicio. Al acceder a esa página con la cookie manipulada, se evalúa su contenido y se ejecuta el payload XSS. Con esto conseguimos que la función print() se dispare sin que el usuario sospeche nada.
+
+
+
 ```html
 <iframe src="https://0a6500a00473d2f780d826bc00f800ab.web-security-academy.net/product?productId=1&'><script>print()</script>" onload="if(!window.x)this.src='https://0a6500a00473d2f780d826bc00f800ab.web-security-academy.net';window.x=1;">
 ```
