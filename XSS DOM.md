@@ -20,3 +20,29 @@ Desde el servidor de explotación, se carga la página vulnerable dentro de un i
 </style>
 <iframe src="https://0ab2005503c2923b803bc6fc00bd0017.web-security-academy.net/" onload="this.contentWindow.postMessage('<img src=1 onerror=print()>','*')">
 ```
+
+## Reto 2:DOM XSS usando mensajes web y una URL de JavaScript
+
+Este laboratorio demuestra una vulnerabilidad de redirección basada en DOM que se activa mediante mensajería web. Para resolver este laboratorio, cree una página HTML en el servidor de exploits que explote esta vulnerabilidad y llame al print() función.
+
+
+En este laboratorio explotamos una vulnerabilidad de tipo DOM XSS basada en redirección, donde la aplicación escucha mensajes entrantes mediante postMessage y utiliza su contenido como destino para un cambio de página usando ‘location.href‘. Aunque intenta validar que la URL comienza con http o https, el uso incorrecto de indexOf permite eludir la comprobación.
+
+Desde el exploit server, se carga la página vulnerable dentro de un iframe y se envía un mensaje que contiene un payload JavaScript válido seguido de una cadena que incluye http, lo suficiente para pasar el filtro. Al llegar al sink ‘location.href‘, se ejecuta la función print, demostrando cómo una validación mal implementada puede abrir la puerta a la ejecución de código arbitrario.
+
+```html
+<iframe src="https://0a40003a0333871280748fc800f00028.web-security-academy.net/" onload="this.contentWindow.postMessage('javascript:print()//http:','*')">
+```
+
+## Reto 3: DOM XSS usando mensajes web y JSON.parse
+
+
+Este laboratorio utiliza mensajería web y analiza el mensaje como JSON. Para resolver el laboratorio, cree una página HTML en el servidor de exploits que explote esta vulnerabilidad y llame al print() función.
+
+En este laboratorio aprovechamos una vulnerabilidad de tipo DOM XSS donde la aplicación recibe mensajes mediante postMessage, los interpreta como JSON con JSON.parse y, según su contenido, modifica dinámicamente el atributo src de un iframe interno.
+
+El ataque consiste en enviar desde un iframe un mensaje JSON con un campo type establecido en load-channel y un campo url que contiene un payload en forma de URL JavaScript. El listener interno interpreta el mensaje, valida el tipo y actualiza el iframe sin realizar ninguna comprobación de origen ni sanitización.
+
+```html
+<iframe src=https://0a7900b303e3ee3d80bcbce100c8005e.web-security-academy.net/ onload='this.contentWindow.postMessage("{\"type\":\"load-channel\",\"url\":\"javascript:print()\"}","*")'>
+```
