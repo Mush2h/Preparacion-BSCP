@@ -369,3 +369,10 @@ Referer: https://0a880065036c4b5a802b713f0032004a.web-security-academy.net/my-ac
 Accept-Encoding: gzip, deflate, br
 Accept-Language: en-US,en;q=0.9
 ```
+
+
+## Reto 17: Cómo eludir los controles de acceso mediante la tunelización de solicitudes HTTP/2
+
+Este laboratorio es vulnerable al contrabando de solicitudes porque el servidor frontend degrada las solicitudes HTTP/2 y no limpia adecuadamente los nombres de los encabezados entrantes. Para solucionar el problema, acceda al panel de administración en /admincomo el administratorusuario y eliminar el usuario carlos.
+
+El servidor front-end no reutiliza la conexión con el back-end, por lo que no es vulnerable a los ataques clásicos de contrabando de solicitudes. Sin embargo, sí es vulnerable a la tunelización de solicitudes . 
