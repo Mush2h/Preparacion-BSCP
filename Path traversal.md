@@ -159,6 +159,10 @@ La aplicación valida que el nombre de archivo proporcionado termine con la exte
 
 Para resolver el laboratorio, recupera el contenido del /etc/passwd archivo. 
 
+La aplicación intenta asegurar que los archivos solicitados terminen en .png, pero no considera el uso del byte nulo (%00).
+el servidor interpreta solo lo anterior al %00, accediendo así a ‘/etc/passwd‘ a pesar de que la validación de extensión aparentemente se cumple.
+
+
 ```
 GET /image?filename=../../../etc/passwd%00.png
 ```
