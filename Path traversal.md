@@ -83,3 +83,82 @@ File file = new File(BASE_DIRECTORY, userInput);
 if (file.getCanonicalPath().startsWith(BASE_DIRECTORY)) {
     // process file
 }
+
+## Reto 1: Path traversal caso simple
+
+Este laboratorio contiene una vulnerabilidad de recorrido de ruta en la visualización de imágenes de productos.
+Para resolver el laboratorio, recupera el contenido del /etc/passwd archivo. 
+
+
+La aplicación permite cargar imágenes de productos a través de un parámetro ‘filename‘. Interceptamos esta petición y abusamos de la falta de validación para escalar directorios utilizando secuencias ‘../‘.
+
+```
+GET /image?filename=../../../../../../etc/passwd
+```
+
+## Reto 2: Path traversal secuencias de recorrido bloqueadas con omisión de ruta absoluta
+
+Este laboratorio contiene una vulnerabilidad de recorrido de ruta en la visualización de imágenes de productos.
+
+La aplicación bloquea las secuencias de recorrido pero trata el nombre de archivo proporcionado como relativo a un directorio de trabajo predeterminado.
+
+Para resolver el laboratorio, recupera el contenido del /etc/passwd archivo. 
+
+Aunque la aplicación filtra las secuencias clásicas de path traversal, como ‘../‘, permite especificar rutas absolutas desde el sistema de archivos raíz.
+
+```
+GET /image?filename=/etc/passwd
+```
+
+## Reto 3: Recorrido de rutas de archivos, secuencias de recorrido eliminadas de forma no recursiva
+
+Este laboratorio contiene una vulnerabilidad de recorrido de ruta en la visualización de imágenes de productos.
+
+La aplicación elimina las secuencias de recorrido de ruta del nombre de archivo proporcionado por el usuario antes de usarlo.
+
+Para resolver el laboratorio, recupera el contenido del /etc/passwd archivo. 
+
+La aplicación intenta mitigar el path traversal eliminando las secuencias ‘../‘, pero lo hace de forma no recursiva. Esto permite evadir el filtro usando variantes como ‘….//‘, que tras la normalización del sistema de archivos siguen interpretándose como una subida de directorio.
+
+```
+GET /image?filename=....//....//....//....//....//....//etc/passwd
+```
+
+## Reto 4:Path traversal secuencias de recorrido eliminadas con decodificación de URL superflua
+
+Este laboratorio contiene una vulnerabilidad de recorrido de ruta en la visualización de imágenes de productos.
+
+La aplicación bloquea la entrada que contiene secuencias de recorrido de ruta. Luego, realiza una decodificación URL de la entrada antes de usarla.
+
+Para resolver el laboratorio, recupera el contenido del /etc/passwd archivo.
+
+En este caso, la aplicación bloquea directamente las secuencias ‘../‘, pero comete el error de decodificar la entrada una vez más después del filtrado. Aprovechamos esto utilizando ‘..%252f‘, que al ser decodificado dos veces se transforma en ‘../‘, permitiéndonos realizar un path traversal efectivo.
+
+```
+GET /image?filename=..%2f..%2f..%2f..%2f..%2f..%2fetc/passwd
+```
+
+## Reto 5: Recorrido de rutas de archivos, validación del inicio de la ruta
+
+Este laboratorio contiene una vulnerabilidad de recorrido de ruta en la visualización de imágenes de productos.
+La aplicación transmite la ruta completa del archivo a través de un parámetro de solicitud y valida que la ruta proporcionada comience con la carpeta esperada.
+Para resolver el laboratorio, recupera el contenido del /etc/passwd archivo
+Recorrido de rutas de archivos, validación del inicio de la ruta
+
+En este escenario, la aplicación intenta validar que las rutas comiencen con ‘/var/www/images/‘, pero no restringe adecuadamente lo que viene después. Aprovechamos esto enviando una ruta como ‘/var/www/images/https://loquesea/../etc/passwd‘, que tras la resolución final accede al archivo sensible fuera del directorio permitido.
+
+```
+GET /image?filename=/var/www/images/../../../etc/passwd
+```
+
+## Reto 6: Recorrido de rutas de archivos, validación de la extensión de archivo con omisión de bytes nulos
+
+Este laboratorio contiene una vulnerabilidad de recorrido de ruta en la visualización de imágenes de productos.
+
+La aplicación valida que el nombre de archivo proporcionado termine con la extensión de archivo esperada.
+
+Para resolver el laboratorio, recupera el contenido del /etc/passwd archivo. 
+
+```
+GET /image?filename=../../../etc/passwd%00.png
+```
