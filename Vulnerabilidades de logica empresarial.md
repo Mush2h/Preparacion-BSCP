@@ -66,4 +66,43 @@ echo -n "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ```
 
+## Reto 7: Aislamiento débil en punto final de doble uso
 
+Este laboratorio parte de una suposición errónea sobre el nivel de privilegios del usuario basándose en su entrada. Como resultado, puedes aprovechar la lógica de sus funciones de gestión de cuentas para acceder a las cuentas de usuarios arbitrarios. Para resolver el laboratorio, accede a administratorcuenta y eliminar el usuario carlos.
+
+Puedes iniciar sesión en tu cuenta utilizando las siguientes credenciales: wiener:peter 
+
+vemos cómo un endpoint diseñado para el cambio de contraseña puede ser reutilizado de forma maliciosa por falta de aislamiento lógico. Aunque normalmente se solicita la contraseña actual para realizar el cambio, al eliminar este parámetro en la petición y modificar el valor del campo username a administrator, logramos modificar directamente la contraseña del administrador.
+
+Esto ocurre porque el sistema no valida adecuadamente que la solicitud provenga del usuario autenticado. Tras cambiar la contraseña, accedemos como administrador y eliminamos al usuario carlos, completando así el laboratorio
+
+```
+csrf=u1Vq7m9mIajQJxjsnJZxS0cwlRUBHP72&username=administrator&new-password-1=123&new-password-2=123
+```
+
+## Reto 8: Validación insuficiente del flujo de trabajo
+
+Este experimento parte de premisas erróneas sobre la secuencia de eventos en el proceso de compra. Para resolverlo, aprovecha esta errata para comprar una "chaqueta de cuero ligera l33t".
+
+Puedes iniciar sesión en tu cuenta utilizando las siguientes credenciales: wiener:peter 
+un fallo lógico en la secuencia del proceso de compra. Tras adquirir un producto asequible con el crédito disponible, observamos que el servidor valida la compra únicamente al recibir una petición concreta de confirmación.
+
+Más adelante, añadimos un artículo de mayor valor (la chaqueta) al carrito y simplemente repetimos la misma petición de confirmación usada anteriormente. El sistema no valida si el producto ha sido efectivamente pagado, ni si el crédito cubre el importe, permitiéndonos así adquirir la chaqueta sin coste y resolver el laboratorio.
+
+```
+GET /cart/order-confirmation?order-confirmed=true
+```
+
+## Reto 9: Omisión de autenticación mediante máquina de estados defectuosa
+
+Este laboratorio parte de suposiciones erróneas sobre la secuencia de eventos en el proceso de inicio de sesión. Para resolverlo, aprovecha esta vulnerabilidad para eludir la autenticación, acceder a la interfaz de administración y eliminar el usuario. carlos.
+
+Puedes iniciar sesión en tu cuenta utilizando las siguientes credenciales: wiener:peter 
+
+un fallo en la lógica de la máquina de estados del proceso de autenticación. Tras hacer login, la aplicación nos redirige a una página para seleccionar el rol del usuario. Sin embargo, si interceptamos y descartamos la solicitud de selección de rol justo después de autenticarnos, y accedemos directamente al sitio, la aplicación asume por defecto el rol de administrador.
+
+Esto nos permite acceder al panel de administración sin autorización legítima y eliminar al usuario Carlos para completar el laboratorio.
+
+```
+GET /role-selector HTTP/2
+```
