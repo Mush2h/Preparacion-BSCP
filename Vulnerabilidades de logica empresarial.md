@@ -106,3 +106,24 @@ Esto nos permite acceder al panel de administración sin autorización legítima
 ```
 GET /role-selector HTTP/2
 ```
+
+## Reto 10: Omisión de autenticación mediante oráculo de cifrado
+
+
+Este laboratorio contiene una vulnerabilidad lógica que expone un oráculo de cifrado a los usuarios. Para resolver el laboratorio, explote esta vulnerabilidad para obtener acceso al panel de administración y eliminar al usuario. carlos.
+
+Puedes iniciar sesión en tu cuenta utilizando las siguientes credenciales: wiener:peter
+
+analizamos cómo una cookie de error (notification) permite recuperar datos desencriptados del servidor. Usamos esta funcionalidad como un oracle de desencriptación, descifrando nuestra propia cookie ‘stay-logged-in‘ para aprender su estructura: ‘usuario:timestamp‘. Este paso es esencial para falsificar una cookie válida como administrador.
+
+Aquí generamos una ‘cookie stay-logged-in’ válida para el usuario administrator utilizando el oracle de cifrado del parámetro email.
+
+Para evitar el prefijo añadido, manipulamos el padding y truncamos los primeros 32 bytes del resultado desencriptado. Con la cookie final correctamente ajustada, accedemos al panel de administración y eliminamos al usuario carlos, resolviendo el laboratorio.
+
+Añadimos los byte para luego posteriormente quitarlos por los bloques y no tengamos que quitarlo pos los bloques de relleno.
+
+```
+xxxxxxxxxadministrator:1761908630761
+```
+
+## Reto 11: 
