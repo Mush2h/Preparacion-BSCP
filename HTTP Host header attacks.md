@@ -67,3 +67,49 @@ Utilizando Burp Intruder, realizamos un ataque por fuerza bruta sobre la cabecer
 GET /admin/delete?username=carlos&csrf=JDNJbgVsVpKcoi1LnbmcSAhrkOGEbkOp HTTP/2
 Host: 192.168.0.94
 ```
+## Reto 5: SSRF mediante análisis de solicitudes defectuoso
+
+Este laboratorio es vulnerable a ataques SSRF basados ​​en enrutamiento debido a un error en el análisis del host de destino de la solicitud. Esto permite acceder a un panel de administración de intranet inseguro ubicado en una dirección IP interna.
+
+Para resolver el laboratorio, acceda al panel de administración interno ubicado en el 192.168.0.0/24rango, luego elimine el usuario carlos. 
+
+El Server-Side Request Forgery (SSRF) basado en un fallo de parsing que ocurre cuando la aplicación analiza mal el destino real de la petición al recibir una URL absoluta en lugar de usar solo el valor de la cabecera Host.
+
+El laboratorio permite el acceso al panel interno de administración ubicado en una IP del rango 192.168.0.0/24. Aunque el servidor bloquea los intentos de modificar directamente la cabecera Host, se descubre que al emplear una URL absoluta en la línea de la petición (por ejemplo, GET https://host/), se puede forzar al middleware a redirigir la petición basándose en esa URL, ignorando el valor de la cabecera Host.
+
+Se utiliza Burp Collaborator para verificar que efectivamente el backend realiza peticiones hacia dominios arbitrarios incluidos en esa línea. Luego, mediante Burp Intruder, se fuerza una enumeración de direcciones IP internas hasta encontrar la del panel /admin.
+
+Una vez encontrado, se obtiene el token CSRF y la cookie de sesión del panel, y se construye una petición manual GET apuntando a /admin/delete con los parámetros correctos para eliminar al usuario carlos.
+
+
+```
+GET https://0a6300eb039339be817e4881005d001b.web-security-academy.net/admin/delete?username=carlos&csrf=Xd65sFbfEcEEkaxAwtgh1oM8uJKFaIBt HTTP/2
+
+Host: 192.168.0.125
+```
+
+## Reto 6: Omisión de la validación del host mediante un ataque al estado de la conexión
+
+Este laboratorio es vulnerable a ataques SSRF basados ​​en enrutamiento a través de la cabecera Host. Aunque el servidor front-end pueda parecer inicialmente que realiza una validación robusta de la cabecera Host, asume información sobre todas las solicitudes en una conexión basándose en la primera solicitud que recibe.
+
+Para resolver el laboratorio, aproveche este comportamiento para acceder a un panel de administración interno ubicado en 192.168.0.1/admin, luego elimina al usuario carlos
+
+vulnerabilidad de Server-Side Request Forgery (SSRF) avanzada, donde el servidor valida correctamente la cabecera Host en la primera petición, pero omite esa validación en las siguientes peticiones de la misma conexión. Este tipo de fallo se basa en un mal manejo del estado de conexión y está inspirado en ataques reales descubiertos por PortSwigger, como los Browser-Powered Desync Attacks.
+
+El ataque comienza realizando una petición aparentemente legítima con la cabecera Host apuntando al dominio del laboratorio. A continuación, dentro del mismo canal TCP (mediante “Send group in sequence” en Burp Repeater), se encadena una segunda petición apuntando al host interno 192.168.0.1, específicamente al endpoint /admin.
+
+Debido a la conexión persistente y a que el servidor asumió que todas las peticiones de esa conexión eran válidas tras la primera validación, la segunda petición se enruta internamente sin aplicar la misma validación estricta. Esto permite acceder al panel de administración sin autorización.
+
+Una vez dentro del panel, se recuperan los detalles del formulario (token CSRF, nombre del parámetro username y la ruta /admin/delete) y se construye manualmente una petición POST que, al ser enviada en la misma conexión persistente, permite eliminar al usuario carlos.
+
+La primera consulta es:
+```
+GET / HTTP/1.1
+Host: 0acb00d20413d0e4806fd04500720061.h1-web-security-academy.net
+```
+La segunda que se mandan a la vez agrupada es:
+
+```
+GET /admin/delete?username=carlos&csrf=feZOoSk9ujMEIdTa5a3mdlxIQ957LHIz HTTP/1.1
+Host: 192.168.0.1
+```
